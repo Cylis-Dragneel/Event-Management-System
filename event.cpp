@@ -71,12 +71,18 @@ void Event::setDate(string dt) {
     }
     else {
         cout << "Invalid date! Setting to default." << endl;
-        date = "01 01 2000";
+        date = "01-01-2000";
     }
 }
 
 void Event::setTime(string tm) {
-    time = tm; 
+    if(isValidTime(tm)) {
+        time = tm;
+    }
+    else {
+        cout << "Invalid time! Setting to default." << endl;
+        time = "00:00";
+    }
 }
 
 void Event::setDuration(int dur) { 
