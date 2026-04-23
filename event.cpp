@@ -1,5 +1,7 @@
 #include "event.h"
 #include <iostream>
+#include <stdexcept>  // ✅ For exceptions
+#include <cctype>     // For isdigit(), tolower()
 using namespace std;
 
 int daysInMonth(int m, int y) {
@@ -42,76 +44,77 @@ Event::Event() {
     duration = 0;
     capacity = 0;
     status = 0; // Draft by default
-    type = 0;  // Conference by default 
+    type = 0;  // Conference by default
+    eventId = 0;   
+    venueId = 0;    
 }
 
-Event::Event(string n, string d, string dt, string tm, int dur, int cap, int typ) {
-    name = n;
-    description = d;
-    date = dt;
-    time = tm;
-    duration = dur;
-    capacity = cap;
-    status = 0; // starting as Draft
-    type = typ;
+Event::Event(int eventId, string name, string description, string date, string time, 
+             int duration, int capacity, int type, int venueId) {
+    this->eventId = eventId;
+    this->name = name;
+    this->description = description;
+    this->date = date;
+    this->time = time;
+    this->duration = duration;
+    this->capacity = capacity;
+    this->type = type;
+    this->venueId = venueId;
+    status = 0; // default
 }
 
 // SETTERS
-void Event::setName(string n) { 
-    name = n; 
+void Event::setName(string name) { 
+    this->name = name; 
 }
 
-void Event::setDescription(string d) {
-    description = d; 
+void Event::setDescription(string description) {
+    this->description = description; 
 }
 
-void Event::setDate(string dt) {
-    if(isValidDate(dt)) {
-        date = dt;
+void Event::setDate(string date) {
+    if(isValidDate(date)) {
+        this->date = date;
     }
     else {
-        cout << "Invalid date! Setting to default." << endl;
-        date = "01-01-2000";
+        this->date = "01-01-2000";
+        throw invalid_argument("Invalid date format! Expected DD-MM-YYYY.");
     }
 }
 
-void Event::setTime(string tm) {
-    if(isValidTime(tm)) {
-        time = tm;
+void Event::setTime(string time) {
+    if(isValidTime(time)) {
+        this->time = time;
     }
     else {
-        cout << "Invalid time! Setting to default." << endl;
-        time = "00:00";
+        throw invalid_argument("Invalid time format! Expected HH:MM.");
     }
 }
 
-void Event::setDuration(int dur) { 
-    if(isValidDuration(dur)) {
-        duration = dur; 
+void Event::setDuration(int duration) { 
+    if(isValidDuration(duration)) {
+        this->duration = duration; 
     }
     else {
-        cout << "Invalid duration! Setting to default." << endl;
-        duration = 0;
+        throw out_of_range("Invalid! Duration must be between 30 and 500 minutes.");
     }
 }
 
-void Event::setCapacity(int cap) {
-    if (isValidCapacity(cap)) {
-        capacity = cap;
+void Event::setCapacity(int capacity) {
+    if (isValidCapacity(capacity)) {
+        this->capacity = capacity;
     }
     else {
-        cout << "Invalid capacity! Setting to default." << endl;
-        capacity = 0;
+        throw out_of_range("Invalid! Capacity must be between 10 and 500.");
     }
 }
 
-void Event::setType(int t) { 
-    if(t>=0 && t<=5) {
-        type = t; 
+void Event::setType(int type) { 
+    if(type>=0 && type<=5) {
+        this->type = type; 
     }
     else {
-        cout << "Invalid type! Setting to default(conference)" << endl;
-        type = 0;
+        throw out_of_range("Invalid! Type must be between 0 and 5.");
     }
 }
 
@@ -159,6 +162,7 @@ string Event::getStatusText() {
     return "Unknown";
 }
 
+// Status Transition
 bool Event::changeStatus(int newStatus) {
     // Rule 1: Cannot change a Cancelled event
     if (status == 3) {
@@ -190,32 +194,33 @@ bool Event::changeStatus(int newStatus) {
     return false;
 }
 
-bool Event::isValidCapacity(int cap) {
-    if (cap > 10 && cap <= 500) {
+// Check Validation
+bool Event::isValidCapacity(int capacity) {
+    if (capacity > 10 && capacity <= 500) {
         return true;
     }
     return false;
 }
 
-bool Event::isValidDuration(int dur) {
-    if (dur > 30 && dur <= 500) {
+bool Event::isValidDuration(int duration) {
+    if (duration > 30 && duration <= 500) {
         return true;
     }
     return false;
 }
 
-bool Event::isValidDate(string dt) {
+bool Event::isValidDate(string date) {
     // format should be "DD-MM-YYYY"
-    if (dt.length() != 10) {
+    if (date.length() != 10) {
         return false;
     }
-    if (dt[2] != '-' || dt[5] != '-') {
+    if (date[2] != '-' || date[5] != '-') {
         return false;
     }
     
-    string dayStr = dt.substr(0, 2);
-    string monthStr = dt.substr(3, 2);
-    string yearStr = dt.substr(6, 4);
+    string dayStr = date.substr(0, 2);
+    string monthStr = date.substr(3, 2);
+    string yearStr = date.substr(6, 4);
     
     // Check if all are digits
     for(int i=0; i<dayStr.length(); i++) {
@@ -238,18 +243,18 @@ bool Event::isValidDate(string dt) {
     return true;
 }
 
-bool Event::isValidTime(string tm) {
+bool Event::isValidTime(string time) {
     // format should be "00:00"
-    if (tm.length() != 5) {
+    if (time.length() != 5) {
         return false;
     }
-    if (tm[2] != ':') {
+    if (time[2] != ':') {
         return false;
     }
     
     // Extract hours and minutes
-    string hourStr = tm.substr(0, 2);
-    string minStr = tm.substr(3, 2);
+    string hourStr = time.substr(0, 2);
+    string minStr = time.substr(3, 2);
     
     // Check if all are digits
     for(int i=0; i<hourStr.length(); i++) {
@@ -272,3 +277,46 @@ bool Event::isValidTime(string tm) {
     }
     return true;
 }
+
+// SEARCH & FILTER FUNCTIONS 
+bool Event::matchesType(int searchType) {
+    return (type == searchType);
+}
+
+bool Event::matchesStatus(int searchStatus) {
+    return (status == searchStatus);
+}
+
+bool Event::isOnDate(string searchDate) {
+    return (date == searchDate);
+}   
+
+bool Event::isInDateRange(string startDate, string endDate) {
+    if(date>=startDate && date<=endDate) {
+        return true;
+    }
+    return false;
+}
+
+bool Event::matchesKeyword(string keyword) {
+    // convert all to lowercase
+    string lowerName = name;
+    string lowerDesc = description;
+    string lowerKeyword = keyword;
+
+    for(int i=0; i<lowerName.length(); i++) {
+        lowerName[i] = tolower(lowerName[i]);
+    }
+    for(int i=0; i<lowerDesc.length(); i++) {
+        lowerDesc[i] = tolower(lowerDesc[i]);
+    }
+    for(int i=0; i<lowerKeyword.length(); i++) {
+        lowerKeyword[i] = tolower(lowerKeyword[i]);
+    }
+
+    bool matchName = (lowerName.find(lowerKeyword) < lowerName.length());
+    bool matchDesc = (lowerDesc.find(lowerKeyword) < lowerDesc.length());
+
+    return (matchName || matchDesc);
+}
+
