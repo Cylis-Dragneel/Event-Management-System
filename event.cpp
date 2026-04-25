@@ -1,7 +1,5 @@
 #include "event.h"
 #include <iostream>
-#include <stdexcept>  // ✅ For exceptions
-#include <cctype>     // For isdigit(), tolower()
 using namespace std;
 
 int daysInMonth(int m, int y) {
