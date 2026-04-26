@@ -1,11 +1,13 @@
 #ifndef EVENT_H
 #define EVENT_H
 
+#include "venue.h"
 #include <string>
 using namespace std;
 
 class Event {
 private:
+    static int nextEventId; 
     int eventId;
     string name;
     string description;
@@ -15,13 +17,13 @@ private:
     int capacity; // Max attendees(10-500)
     int status;   // 0=Draft, 1=Published, 2=Completed, 3=Cancelled
     int type;     // 0=Conference, 1=Workshop, 2=Concert, 3=Wedding, 4=Corporate, 5=Social
-    int venueId;
+    Venue venue;
 
 public:
     // Constructors
     Event();
-    Event(int eventId, string name, string description, string date, string time,
-            int duration, int capacity, int type, int venueId);
+    Event(string name, string description, string date, string time,
+            int duration, int capacity, int type);
 
     // Setters
     void setName(string n);
@@ -31,10 +33,10 @@ public:
     void setDuration(int dur);
     void setCapacity(int cap);
     void setType(int t);
-    void setEventId(int id);
-    void setVenueId(int vId);
+    void setVenue(Venue venue);
 
     // Getters
+    int getEventId();
     string getName();
     string getDescription();
     string getDate();
@@ -43,25 +45,19 @@ public:
     int getCapacity();
     int getType();
     string getTypeText();
-    int getEventId();
+    Venue getVenue();
     int getVenueId();
+
     int getStatus();
     string getStatusText();
-
     bool changeStatus(int newStatus);
-
-    // Check Validation
-    bool isValidCapacity(int cap);
-    bool isValidDuration(int dur);
-    bool isValidDate(string dt);
-    bool isValidTime(string t);
 
     // Search and Filter Functions
     bool matchesType(int searchType);                    
     bool matchesStatus(int searchStatus);                
     bool isOnDate(string searchDate);                     
     bool isInDateRange(string startDate, string endDate); 
-    bool matchesKeyword(string keyword);                 
+    bool matchesKeyword(string keyword); 
 };
 
 #endif

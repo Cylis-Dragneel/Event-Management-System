@@ -1,40 +1,12 @@
 #include "event.h"
+#include "validation.h"
 #include <iostream>
 using namespace std;
 
-int daysInMonth(int m, int y) {
-    int d;
-    if(m == 1 || m == 3 || m == 5 || m == 7 || m == 8 || m == 10 || m == 12) { 
-        d = 31;
-    } 
-    else if(m == 4 || m == 6 || m == 9 || m == 11) { 
-        d = 30;
-    }
-    else { // checking leap year
-        if((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0)) {
-            d = 29;
-        }
-        else {
-            d = 28;
-        }
-    }
-    return d;
-}
-
-bool validDate(int day, int month, int year) {
-    if(month<1 || month>12 || year<1) {
-        return false;
-    }
-    if(day<1 || day>daysInMonth(month, year)) {
-        return false;
-    }
-    if(year < 2025 || year > 2030) {  
-        return false;
-    }
-    return true;
-} 
+int Event::nextEventId = 1;  
 
 Event::Event() {
+    eventId = nextEventId++; 
     name = "unknown";
     description = "none";
     date = "01-01-2000";
@@ -43,13 +15,11 @@ Event::Event() {
     capacity = 0;
     status = 0; // Draft by default
     type = 0;  // Conference by default
-    eventId = 0;   
-    venueId = 0;    
 }
 
-Event::Event(int eventId, string name, string description, string date, string time, 
-             int duration, int capacity, int type, int venueId) {
-    this->eventId = eventId;
+Event::Event(string name, string description, string date, string time, 
+            int duration, int capacity, int type) {
+    this->eventId = nextEventId++; 
     this->name = name;
     this->description = description;
     this->date = date;
@@ -57,21 +27,30 @@ Event::Event(int eventId, string name, string description, string date, string t
     this->duration = duration;
     this->capacity = capacity;
     this->type = type;
-    this->venueId = venueId;
     status = 0; // default
 }
 
 // SETTERS
 void Event::setName(string name) { 
-    this->name = name; 
+    if(Validation::isValidName(name)) {
+        this->name = name;
+    }
+    else {
+        throw invalid_argument("Invalid Event name!");
+    }
 }
 
 void Event::setDescription(string description) {
-    this->description = description; 
+    if(Validation::isValidAddress(description)) {
+        this->description = description; 
+    }
+    else {
+        throw invalid_argument("Invalid Event description!");
+    }
 }
 
 void Event::setDate(string date) {
-    if(isValidDate(date)) {
+    if(Validation::isValidDate(date)) {
         this->date = date;
     }
     else {
@@ -81,7 +60,7 @@ void Event::setDate(string date) {
 }
 
 void Event::setTime(string time) {
-    if(isValidTime(time)) {
+    if(Validation::isValidTime(time)) {
         this->time = time;
     }
     else {
@@ -90,7 +69,7 @@ void Event::setTime(string time) {
 }
 
 void Event::setDuration(int duration) { 
-    if(isValidDuration(duration)) {
+    if(duration > 30 && duration <= 500) {
         this->duration = duration; 
     }
     else {
@@ -99,11 +78,11 @@ void Event::setDuration(int duration) {
 }
 
 void Event::setCapacity(int capacity) {
-    if (isValidCapacity(capacity)) {
+    if (capacity > 10 && capacity <= 1000) {
         this->capacity = capacity;
     }
     else {
-        throw out_of_range("Invalid! Capacity must be between 10 and 500.");
+        throw out_of_range("Invalid! Capacity must be between 10 and 1000.");
     }
 }
 
@@ -116,7 +95,14 @@ void Event::setType(int type) {
     }
 }
 
+void Event::setVenue(Venue venue) {
+    this->venue = venue;
+}
+
 // GETTERS 
+int Event::getEventId() { 
+    return eventId; 
+}
 string Event::getName() { 
     return name; 
 }
@@ -137,6 +123,12 @@ int Event::getCapacity() {
 }
 int Event::getType() { 
     return type; 
+}
+Venue Event::getVenue() {
+    return venue;
+}
+int Event::getVenueId() {
+    return venue.getVenueId();
 }
 
 string Event::getTypeText() {
@@ -190,90 +182,6 @@ bool Event::changeStatus(int newStatus) {
         return false; 
     }
     return false;
-}
-
-// Check Validation
-bool Event::isValidCapacity(int capacity) {
-    if (capacity > 10 && capacity <= 500) {
-        return true;
-    }
-    return false;
-}
-
-bool Event::isValidDuration(int duration) {
-    if (duration > 30 && duration <= 500) {
-        return true;
-    }
-    return false;
-}
-
-bool Event::isValidDate(string date) {
-    // format should be "DD-MM-YYYY"
-    if (date.length() != 10) {
-        return false;
-    }
-    if (date[2] != '-' || date[5] != '-') {
-        return false;
-    }
-    
-    string dayStr = date.substr(0, 2);
-    string monthStr = date.substr(3, 2);
-    string yearStr = date.substr(6, 4);
-    
-    // Check if all are digits
-    for(int i=0; i<dayStr.length(); i++) {
-        if (!isdigit(dayStr[i])) return false;
-    }
-    for(int i=0; i<monthStr.length(); i++) {
-        if (!isdigit(monthStr[i])) return false;
-    }
-    for(int i=0; i<yearStr.length(); i++) {
-        if (!isdigit(yearStr[i])) return false;
-    }
-    
-    int day = stoi(dayStr);
-    int month = stoi(monthStr);
-    int year = stoi(yearStr);
-
-    if(!validDate(day, month, year)) {
-        return false;
-    }
-    return true;
-}
-
-bool Event::isValidTime(string time) {
-    // format should be "00:00"
-    if (time.length() != 5) {
-        return false;
-    }
-    if (time[2] != ':') {
-        return false;
-    }
-    
-    // Extract hours and minutes
-    string hourStr = time.substr(0, 2);
-    string minStr = time.substr(3, 2);
-    
-    // Check if all are digits
-    for(int i=0; i<hourStr.length(); i++) {
-        if (!isdigit(hourStr[i])) 
-            return false;
-    }
-    for(int i=0; i<minStr.length(); i++) {
-        if (!isdigit(minStr[i])) 
-            return false;
-    }
-
-    int hour = stoi(hourStr);
-    int minute = stoi(minStr);
-
-    if (hour < 0 || hour > 23) {
-        return false;
-    }
-    if (minute < 0 || minute > 59) {
-        return false;
-    }
-    return true;
 }
 
 // SEARCH & FILTER FUNCTIONS 
