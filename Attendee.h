@@ -1,33 +1,52 @@
 #ifndef ATTENDEE_H
 #define ATTENDEE_H
 
-#include<iostream>
-using namespace std;
-
+#include <string>
+using namespace std;  
 class Attendee {
-protected:
-int id;
-string name;
-string status;
-string payment;
+private:
+    int attendeeId;
+    string firstName;
+    string lastName;
+    string email;
+    string phone;
+    string address;
 
 public:
-Attendee ();
-Attendee(int i, string n);
+    
+    Attendee();
+    Attendee(int attendeeId, string firstName, string lastName, string email);
+    Attendee(int attendeeId, string firstName, string lastName, 
+             string email, string phone, string address);
+    
+    
+    ~Attendee();
+    
 
-int getId();
-string getname();
-string getStatus();
-string getPayment();
-
-
-void setStatus(string s);
-void setPayment(string p);
-
-virtual void display();
-
+    int getAttendeeId();
+    string getFirstName();
+    string getLastName();
+    string getFullName();
+    string getEmail();
+    string getPhone();
+    string getAddress();
+    
+    //  validation
+    void setAttendeeId(int id);
+    void setFirstName(string name);
+    void setLastName(string name);
+    void setEmail(string email);
+    void setPhone(string phone);
+    void setAddress(string address);
+    bool isComplete(); 
+    
+    bool isValidName();
+    bool isValidId();
+    
+    bool isValidEmail();
+   
+private:
+    bool containsOnlyLettersAndSpaces(string str);
 };
-
-
 
 #endif
