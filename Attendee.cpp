@@ -1,5 +1,7 @@
 #include "Attendee.h"
-
+#include <iostream>
+#include <stdexcept>
+using namespace std;
 
 Attendee::Attendee() {
     attendeeId = -1;
@@ -10,189 +12,126 @@ Attendee::Attendee() {
     address = "";
 }
 
-
-Attendee::Attendee(int attendeeId, string firstName, 
-                   string lastName, string email) {
-    this->attendeeId = attendeeId;
-    this->email = email;
-    this->phone = "";
-    this->address = "";
+Attendee::Attendee(int attendeeId, string firstName, string lastName, string email, string phone, string address) {
     
-    if (containsOnlyLettersAndSpaces(firstName)) {
-        this->firstName = firstName;
-    } else {
-        this->firstName = "";
-    }
-    
-    if (containsOnlyLettersAndSpaces(lastName)) {
-        this->lastName = lastName;
-    } else {
-        this->lastName = "";
-    }
-}
-
-Attendee::Attendee(int attendeeId, string firstName, string lastName,
-                   string email, string phone, string address) {
     this->attendeeId = attendeeId;
+    this->firstName = firstName;
+    this->lastName = lastName;
     this->email = email;
     this->phone = phone;
     this->address = address;
-    
-    if (containsOnlyLettersAndSpaces(firstName)) {
-        this->firstName = firstName;
-    } else {
-        this->firstName = "";
-    }
-    
-    if (containsOnlyLettersAndSpaces(lastName)) {
-        this->lastName = lastName;
-    } else {
-        this->lastName = "";
-    }
 }
-
 
 Attendee::~Attendee() {}
 
-bool Attendee::containsOnlyLettersAndSpaces(string str) {
-    if (str.length() == 0) {
-        return false;
-    }
-    
-    for (int i = 0; i < (int)str.length(); i++) {
-        char c = str[i];
-        bool isLetter = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-        bool isSpace = (c == ' ');
-        
-        if (!isLetter && !isSpace) {
-            return false;
-        }
-    }
-    return true;
+int Attendee::getAttendeeId() {
+     return attendeeId; 
 }
-
-int Attendee::getAttendeeId() { 
-    return attendeeId; 
-}
-
-string Attendee::getFirstName() { 
-    return firstName; 
-}
-
+string Attendee::getFirstName() {
+     return firstName;
+ }
 string Attendee::getLastName() { 
     return lastName; 
 }
-
-string Attendee::getFullName() { 
-    if (firstName == "" || lastName == "") {
-        return "";
-    }
+string Attendee::getFullName() 
+{ 
     return firstName + " " + lastName; 
 }
-
-string Attendee::getEmail() { 
-    return email; 
-}
-
+string Attendee::getEmail(){
+     return email; 
+ }
 string Attendee::getPhone() { 
     return phone; 
 }
-
 string Attendee::getAddress() { 
     return address; 
 }
 
-
 void Attendee::setAttendeeId(int id) {
-    if (id > 0 && id <= 999999) {
-        attendeeId = id;
+    if(id > 0) {
+        this->attendeeId = id;
+    }
+    else {
+        throw invalid_argument("Invalid Attendee ID!");
     }
 }
 
 void Attendee::setFirstName(string name) {
-    if (containsOnlyLettersAndSpaces(name)) {
-        firstName = name;
+    if(Validation::isValidName(name)) {
+        this->firstName = name;
+    }
+    else {
+        throw invalid_argument("Invalid first name!");
     }
 }
 
 void Attendee::setLastName(string name) {
-    if (containsOnlyLettersAndSpaces(name)) {
-        lastName = name;
+    if(Validation::isValidName(name)) {
+        this->lastName = name;
+    }
+    else {
+        throw invalid_argument("Invalid last name!");
     }
 }
 
 void Attendee::setEmail(string email) {
-    bool hasAt = false;
-    bool hasDot = false;
-    
-    for (int i = 0; i < (int)email.length(); i++) {
-        if (email[i] == '@') {
-            hasAt = true;
-        }
-        if (hasAt && email[i] == '.') {
-            hasDot = true;
-        }
-    }
-    
-    if (hasAt && hasDot && email.length() > 0) {
+    if(Validation::isValidEmail(email)) {
         this->email = email;
+    }
+    else {
+        throw invalid_argument("Invalid email!");
     }
 }
 
 void Attendee::setPhone(string phone) {
-    if (phone.length() == 0) {
-        this->phone = "";
-        return;
-    }
-    
-    int digitCount = 0;
-    for (int i = 0; i < (int)phone.length(); i++) {
-        if (phone[i] >= '0' && phone[i] <= '9') {
-            digitCount++;
-        }
-    }
-    
-    if (digitCount >= 10 && digitCount <= 15) {
+    if(phone == "") {
         this->phone = phone;
+    }
+    else if(Validation::isValidPhone(phone)) {
+        this->phone = phone;
+    }
+    else {
+        throw invalid_argument("Invalid phone number! Format: 03XX-XXXXXXX");
     }
 }
 
 void Attendee::setAddress(string address) {
-    if (address.length() <= 200) {
+    if(address == "") {
         this->address = address;
+    }
+    else if(Validation::isValidAddress(address)) {
+        this->address = address;
+    }
+    else {
+        throw invalid_argument("Invalid address! Address must be at least 5 characters");
     }
 }
 
+// Validation functions
 bool Attendee::isValidId() {
-    return (attendeeId > 0 && attendeeId <= 999999);
+    return (attendeeId > 0);
 }
-
 
 bool Attendee::isValidName() {
     return (firstName != "" && lastName != "");
 }
 
 bool Attendee::isValidEmail() {
-    if (email.length() == 0) {
-        return false;
-    }
-    
-    bool hasAt = false;
-    bool hasDot = false;
-    
-    for (int i = 0; i < (int)email.length(); i++) {
-        if (email[i] == '@') {
-            hasAt = true;
-        }
-        if (hasAt && email[i] == '.') {
-            hasDot = true;
-        }
-    }
-    
-    return (hasAt && hasDot);
+    return Validation::isValidEmail(email);
 }
 
+bool Attendee::isValidPhone() {
+    if(phone == "") 
+    return true;
+    return Validation::isValidPhone(phone);
+}
+
+bool Attendee::isValidAddress() {
+    if(address == "") 
+    return true;
+    return Validation::isValidAddress(address);
+}
 
 bool Attendee::isComplete() {
-    return (isValidId() && isValidName() && isValidEmail());
+    return (isValidId() && isValidName() && isValidEmail() && isValidPhone() && isValidAddress());
 }

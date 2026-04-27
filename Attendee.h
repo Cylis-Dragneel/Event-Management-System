@@ -2,7 +2,11 @@
 #define ATTENDEE_H
 
 #include <string>
-using namespace std;  
+#include <stdexcept>
+#include "validation.h"
+
+using namespace std;
+
 class Attendee {
 private:
     int attendeeId;
@@ -13,16 +17,13 @@ private:
     string address;
 
 public:
-    
     Attendee();
-    Attendee(int attendeeId, string firstName, string lastName, string email);
-    Attendee(int attendeeId, string firstName, string lastName, 
-             string email, string phone, string address);
+    Attendee(int attendeeId, string firstName, string lastName, string email, string phone, string address);
     
-    
+    // Destructor
     ~Attendee();
     
-
+    // Getters
     int getAttendeeId();
     string getFirstName();
     string getLastName();
@@ -31,22 +32,21 @@ public:
     string getPhone();
     string getAddress();
     
-    //  validation
+    // Setters with throw
     void setAttendeeId(int id);
     void setFirstName(string name);
     void setLastName(string name);
     void setEmail(string email);
     void setPhone(string phone);
     void setAddress(string address);
-    bool isComplete(); 
     
-    bool isValidName();
+    // Validation
     bool isValidId();
-    
+    bool isValidName();
     bool isValidEmail();
-   
-private:
-    bool containsOnlyLettersAndSpaces(string str);
+    bool isValidPhone();
+    bool isValidAddress();
+    bool isComplete();
 };
 
 #endif
