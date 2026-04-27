@@ -32,7 +32,7 @@ public:
     string getPhone();
     string getAddress();
     
-    // Setters with throw
+    
     void setAttendeeId(int id);
     void setFirstName(string name);
     void setLastName(string name);
