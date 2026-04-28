@@ -177,27 +177,35 @@ bool Validation::isValidText(string text) {
 }
 
 bool Validation::isValidPhone(string contactNumber) {
-    // allow format: 042-12345678/0300-1234567
+    // Allow format: 042-12345678/0300-1234567
     if (contactNumber.length() != 12) {
-        return false;
-    }
-    if (contactNumber[3] != '-' || contactNumber[4] != '-') {
         return false;
     }
     if (contactNumber[0] != '0') {
         return false;
     }
     
-    string preDashStr = contactNumber.substr(0, 4);
-    string postDashStr = contactNumber.substr(5, 7);
+    int dashPos;
+    if (contactNumber[3] == '-') {
+        dashPos = 3;  
+    }
+    else if (contactNumber[4] == '-') {
+        dashPos = 4;   
+    }
+    else {
+        return false;  
+    }
     
-    // Check if all are digits
-    for(int i=0; i<preDashStr.length(); i++) {
+    string preDashStr = contactNumber.substr(0, dashPos);
+    string postDashStr = contactNumber.substr(dashPos + 1);
+    
+    for(int i = 0; i < preDashStr.length(); i++) {
         if (!isdigit(preDashStr[i])) return false;
     }
-    for(int i=0; i<postDashStr.length(); i++) {
+    for(int i = 0; i < postDashStr.length(); i++) {
         if (!isdigit(postDashStr[i])) return false;
     }
+    
     return true;
 }
 
