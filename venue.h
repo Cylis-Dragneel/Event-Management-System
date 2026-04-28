@@ -40,27 +40,23 @@ public:
     void setHasAVEquipment(bool hasAVEquipment);
 
     // Getters
-    // venue.h — mark all getters as const
     int getVenueId() const;
     string getName() const;
     string getAddress() const;
-    int getCapacity() const; // ← this one fixes the immediate error
+    int getCapacity() const; 
     string getContactNumber() const;
     string getContactEmail() const;
 
-    // Amenities Getters
     bool getHasWifi() const;
     bool getHasParking() const;
     bool getHasCatering() const;
     bool getHasAVEquipment() const;
-    string getAmenitiesList() const;
-
-    string getAmenitiesList(); // Returns "WiFi Parking Catering"
+    string getAmenitiesList() const; // Returns "WiFi Parking Catering"
 
     // Search & Filter Functions
-    bool matchesKeyword(string keyword);                    // Search venue name or address
-    bool matchesCapacity(int minCapacity, int maxCapacity); // Filter by capacity range
-    bool hasAmenity(string amenityName);                    // Filter by specific amenity (e.g., "WiFi")
+    bool matchesKeyword(string keyword); // Search venue name or address
+    bool matchesCapacity(int minCapacity, int maxCapacity); 
+    bool hasAmenity(string amenityName);                    
 };
 
 #endif
