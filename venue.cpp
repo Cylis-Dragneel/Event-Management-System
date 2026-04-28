@@ -44,7 +44,7 @@ void Venue::setName(string name) {
 }
 
 void Venue::setAddress(string address) {
-    if(Validation::isValidAddress(address)) {
+    if(Validation::isValidText(address)) {
         this->address = address;
     }
     else {

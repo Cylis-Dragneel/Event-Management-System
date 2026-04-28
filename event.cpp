@@ -40,7 +40,7 @@ void Event::setName(string name) {
 }
 
 void Event::setDescription(string description) {
-    if(Validation::isValidAddress(description)) {
+    if(Validation::isValidText(description)) {
         this->description = description; 
     }
     else {
