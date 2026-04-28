@@ -58,7 +58,6 @@ public:
     bool matchesType(int searchType);
     bool matchesStatus(int searchStatus);
     bool isOnDate(string searchDate);
-    bool isInDateRange(string startDate, string endDate);
     bool matchesKeyword(string keyword);
 
     bool isCompatibleWithVenue(const Venue &venue) const;
