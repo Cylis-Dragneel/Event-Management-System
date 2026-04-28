@@ -5,9 +5,10 @@
 #include <string>
 using namespace std;
 
-class Event {
+class Event
+{
 private:
-    static int nextEventId; 
+    static int nextEventId;
     int eventId;
     string name;
     string description;
@@ -23,7 +24,7 @@ public:
     // Constructors
     Event();
     Event(string name, string description, string date, string time,
-            int duration, int capacity, int type);
+          int duration, int capacity, int type);
 
     // Setters
     void setName(string n);
@@ -36,28 +37,31 @@ public:
     void setVenue(Venue venue);
 
     // Getters
-    int getEventId();
-    string getName();
-    string getDescription();
-    string getDate();
-    string getTime();
-    int getDuration();
-    int getCapacity();
-    int getType();
-    string getTypeText();
+    int getEventId() const;
+    string getName() const;
+    string getDescription() const;
+    string getDate() const;
+    string getTime() const;
+    int getDuration() const;
+    int getCapacity() const;
+    int getType() const;
+    int getStatus() const;
+    string getTypeText() const;
+    string getStatusText() const;
+
     Venue getVenue();
     int getVenueId();
 
-    int getStatus();
-    string getStatusText();
     bool changeStatus(int newStatus);
 
     // Search and Filter Functions
-    bool matchesType(int searchType);                    
-    bool matchesStatus(int searchStatus);                
-    bool isOnDate(string searchDate);                     
-    bool isInDateRange(string startDate, string endDate); 
-    bool matchesKeyword(string keyword); 
+    bool matchesType(int searchType);
+    bool matchesStatus(int searchStatus);
+    bool isOnDate(string searchDate);
+    bool isInDateRange(string startDate, string endDate);
+    bool matchesKeyword(string keyword);
+
+    bool isCompatibleWithVenue(const Venue &venue) const;
 };
 
 #endif

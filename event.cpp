@@ -68,7 +68,7 @@ void Event::setTime(string time) {
 }
 
 void Event::setDuration(int duration) { 
-    if(duration > 30 && duration <= 500) {
+    if(duration >= 30 && duration <= 500) {
         this->duration = duration; 
     }
     else {
@@ -77,11 +77,11 @@ void Event::setDuration(int duration) {
 }
 
 void Event::setCapacity(int capacity) {
-    if (capacity > 10 && capacity <= 1000) {
+    if (capacity >= 1 && capacity <= 1000) {
         this->capacity = capacity;
     }
     else {
-        throw out_of_range("Invalid! Capacity must be between 10 and 1000.");
+        throw out_of_range("Invalid! Capacity must be between 1 and 1000.");
     }
 }
 
@@ -99,28 +99,28 @@ void Event::setVenue(Venue venue) {
 }
 
 // GETTERS 
-int Event::getEventId() { 
+int Event::getEventId() const { 
     return eventId; 
 }
-string Event::getName() { 
+string Event::getName() const { 
     return name; 
 }
-string Event::getDescription() { 
+string Event::getDescription() const { 
     return description; 
 }
-string Event::getDate() { 
+string Event::getDate() const { 
     return date; 
 }
-string Event::getTime() { 
+string Event::getTime() const { 
     return time; 
 }
-int Event::getDuration() { 
+int Event::getDuration() const { 
     return duration; 
 }
-int Event::getCapacity() { 
+int Event::getCapacity() const { 
     return capacity; 
 }
-int Event::getType() { 
+int Event::getType() const { 
     return type; 
 }
 Venue Event::getVenue() {
@@ -130,7 +130,7 @@ int Event::getVenueId() {
     return venue.getVenueId();
 }
 
-string Event::getTypeText() {
+string Event::getTypeText() const {
     string types[] = {"Conference", "Workshop", "Concert", "Wedding", "Corporate", "Social"};
     if (type >= 0 && type <= 5)
     {
@@ -139,11 +139,11 @@ string Event::getTypeText() {
     return "Unknown";
 }
 
-int Event::getStatus() { 
+int Event::getStatus() const { 
     return status; 
 }
 
-string Event::getStatusText() {
+string Event::getStatusText() const {
     string statuses[] = {"Draft", "Published", "Completed", "Cancelled"};
     if (status >= 0 && status <= 3) {
         return statuses[status];
@@ -196,13 +196,6 @@ bool Event::isOnDate(string searchDate) {
     return (date == searchDate);
 }   
 
-bool Event::isInDateRange(string startDate, string endDate) {
-    if(date>=startDate && date<=endDate) {
-        return true;
-    }
-    return false;
-}
-
 bool Event::matchesKeyword(string keyword) {
     // convert all to lowercase
     string lowerName = name;
@@ -219,9 +212,13 @@ bool Event::matchesKeyword(string keyword) {
         lowerKeyword[i] = tolower(lowerKeyword[i]);
     }
 
-    bool matchName = (lowerName.find(lowerKeyword) < lowerName.length());
-    bool matchDesc = (lowerDesc.find(lowerKeyword) < lowerDesc.length());
+    bool matchName = (lowerName.find(lowerKeyword) != string::npos);
+    bool matchDesc = (lowerDesc.find(lowerKeyword) != string::npos);
 
     return (matchName || matchDesc);
 }
 
+bool Event::isCompatibleWithVenue(const Venue& venue) const {
+    return (capacity <= venue.getCapacity());
+
+}
