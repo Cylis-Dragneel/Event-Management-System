@@ -103,7 +103,7 @@ bool Validation::isValidTime(string time) {
 }
 
 bool Validation::isValidName(string name) {
-    if(name.length() < 2) {
+    if(name.length() < 3) {
         return false;
     }
 
@@ -142,7 +142,7 @@ bool Validation::isValidAddress(string address) {
         return false;
     }
 
-    // Check if only spaces
+    // Check if only spaces 
     bool onlySpaces = true;
     for(int i = 0; i < address.length(); i++) {
         if(address[i] != ' ') {
@@ -152,6 +152,20 @@ bool Validation::isValidAddress(string address) {
     }
     if(onlySpaces) {
         return false;
+    }
+
+    // Check if contains at least one letter or num (allow spaces, comma, dash)
+    bool hasLetterNum = false;
+    for(int i = 0; i < address.length(); i++) {
+        if(isalpha(address[i]) || isdigit(address[i])) {
+            hasLetterNum = true;
+        }
+        else if(address[i] != ' ' && address[i] != '-' && address[i] != ',') {
+            return false;  // Invalid character found
+        }
+    }
+    if(!hasLetterNum) {
+        return false;  
     }
 
     return true;

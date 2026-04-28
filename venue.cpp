@@ -22,19 +22,18 @@ Venue::Venue() {
 Venue::Venue(string name, string address, int capacity, string contactNumber, string contactEmail,
              bool hasWifi, bool hasParking, bool hasCatering, bool hasAVEquipment) {
     this->venueId = nextVenueId++;
-    this->name = name;
-    this->address = address;
-    this->capacity = capacity;
-    this->contactNumber = contactNumber;
-    this->contactEmail = contactEmail;
-    this->hasWifi = hasWifi;
-    this->hasParking = hasParking;
-    this->hasCatering = hasCatering;
-    this->hasAVEquipment = hasAVEquipment;
+    setName(name);
+    setAddress(address);
+    setCapacity(capacity);
+    setContactNumber(contactNumber);
+    setContactEmail(contactEmail);
+    setHasWifi(hasWifi);
+    setHasParking(hasParking);
+    setHasCatering(hasCatering);
+    setHasAVEquipment(hasAVEquipment);
 }
 
 // SETTERS
-
 void Venue::setName(string name) {
     if(Validation::isValidName(name)) {
         this->name = name;
@@ -76,7 +75,7 @@ void Venue::setContactEmail(string contactEmail) {
         this->contactEmail = contactEmail;
     }
     else {
-        throw invalid_argument("Contact Email must be in Format: 0000-1234567!");
+        throw invalid_argument("Contact Email must be in Format: abc@gmail.com!");
     }
 }
 

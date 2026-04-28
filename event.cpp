@@ -17,16 +17,15 @@ Event::Event() {
     type = 0;  // Conference by default
 }
 
-Event::Event(string name, string description, string date, string time, 
-            int duration, int capacity, int type) {
+Event::Event(string name, string description, string date, string time, int duration, int capacity, int type) {
     this->eventId = nextEventId++; 
-    this->name = name;
-    this->description = description;
-    this->date = date;
-    this->time = time;
-    this->duration = duration;
-    this->capacity = capacity;
-    this->type = type;
+    setName(name);
+    setDescription(description);
+    setDate(date);
+    setTime(time);
+    setCapacity(capacity);
+    setDuration(duration);
+    setType(type);
     status = 0; // default
 }
 
