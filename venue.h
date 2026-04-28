@@ -6,26 +6,26 @@ using namespace std;
 
 class Venue {
 private:
-    static int nextVenueId; 
+    static int nextVenueId;
     int venueId;
     string name;
     string address;
     int capacity;
     string contactNumber; // Format: 0000-1234567
-    string contactEmail; // Format: abc@gmail.com
-    
+    string contactEmail;  // Format: abc@gmail.com
+
     // Amenities
     bool hasWifi;
     bool hasParking;
     bool hasCatering;
     bool hasAVEquipment; // projectors, mic, etc
-    
+
 public:
     // Constructors
     Venue();
     Venue(string name, string address, int capacity, string contactNumber, string contactEmail,
-            bool hasWifi, bool hasParking, bool hasCatering, bool hasAVEquipment);
-    
+          bool hasWifi, bool hasParking, bool hasCatering, bool hasAVEquipment);
+
     // Setters
     void setName(string name);
     void setAddress(string address);
@@ -40,20 +40,27 @@ public:
     void setHasAVEquipment(bool hasAVEquipment);
 
     // Getters
-    int getVenueId();    
-    string getName();
-    string getAddress();
-    int getCapacity();
-    string getContactNumber();
-    string getContactEmail();
-    
+    // venue.h — mark all getters as const
+    int getVenueId() const;
+    string getName() const;
+    string getAddress() const;
+    int getCapacity() const; // ← this one fixes the immediate error
+    string getContactNumber() const;
+    string getContactEmail() const;
+
     // Amenities Getters
-    bool getHasWifi();
-    bool getHasParking();
-    bool getHasCatering();
-    bool getHasAVEquipment();
-    
-    string getAmenitiesList();  // Returns "WiFi Parking Catering"
+    bool getHasWifi() const;
+    bool getHasParking() const;
+    bool getHasCatering() const;
+    bool getHasAVEquipment() const;
+    string getAmenitiesList() const;
+
+    string getAmenitiesList(); // Returns "WiFi Parking Catering"
+
+    // Search & Filter Functions
+    bool matchesKeyword(string keyword);                    // Search venue name or address
+    bool matchesCapacity(int minCapacity, int maxCapacity); // Filter by capacity range
+    bool hasAmenity(string amenityName);                    // Filter by specific amenity (e.g., "WiFi")
 };
 
 #endif

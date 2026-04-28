@@ -97,48 +97,48 @@ void Venue::setHasAVEquipment(bool hasAVEquipment) {
 }
 
 // GETTERS
-int Venue::getVenueId() {
+int Venue::getVenueId() const {
     return venueId;
 }
 
-string Venue::getName() {
+string Venue::getName() const {
     return name;
 }
 
-string Venue::getAddress() {
+string Venue::getAddress() const {
     return address;
 }
 
-int Venue::getCapacity() {
+int Venue::getCapacity() const {
     return capacity;
 }
 
-string Venue::getContactNumber() {
+string Venue::getContactNumber() const {
     return contactNumber;
 }
 
-string Venue::getContactEmail() {
+string Venue::getContactEmail() const {
     return contactEmail;
 }
 
 // AMENITIES GETTERS 
-bool Venue::getHasWifi() {
+bool Venue::getHasWifi() const {
     return hasWifi;
 }
 
-bool Venue::getHasParking() {
+bool Venue::getHasParking() const {
     return hasParking;
 }
 
-bool Venue::getHasCatering() {
+bool Venue::getHasCatering() const {
     return hasCatering;
 }
 
-bool Venue::getHasAVEquipment() {
+bool Venue::getHasAVEquipment() const {
     return hasAVEquipment;
 }
 
-string Venue::getAmenitiesList() {
+string Venue::getAmenitiesList() const {
     string list = "";
     
     if(hasWifi) {
@@ -158,4 +158,52 @@ string Venue::getAmenitiesList() {
     }
     
     return list;
+}
+
+bool Venue::matchesKeyword(string keyword) {
+    // Convert to lowercase
+    string lowerName = name;
+    string lowerAddress = address;
+    string lowerKeyword = keyword;
+
+    for(int i = 0; i < lowerName.length(); i++) {
+        lowerName[i] = tolower(lowerName[i]);
+    }
+    for(int i = 0; i < lowerAddress.length(); i++) {
+        lowerAddress[i] = tolower(lowerAddress[i]);
+    }
+    for(int i = 0; i < lowerKeyword.length(); i++) {
+        lowerKeyword[i] = tolower(lowerKeyword[i]);
+    }
+
+    bool matchName = (lowerName.find(lowerKeyword) != string::npos);
+    bool matchAddress = (lowerAddress.find(lowerKeyword) != string::npos);
+
+    return (matchName || matchAddress);
+}
+
+bool Venue::matchesCapacity(int minCapacity, int maxCapacity) {
+    return (capacity >= minCapacity && capacity <= maxCapacity);
+}
+
+bool Venue::hasAmenity(string amenityName) {
+    // covert to lowercase
+    for(int i = 0; i < amenityName.length(); i++) {
+        amenityName[i] = tolower(amenityName[i]);
+    }
+
+    if(amenityName == "wifi" && hasWifi){
+        return true;
+    }
+    if(amenityName == "parking" && hasParking){
+        return true;
+    }
+    if(amenityName == "catering" && hasCatering){
+        return true;
+    }
+    if((amenityName == "av" || amenityName == "av equipment") && hasAVEquipment){
+        return true;
+    }
+    
+    return false;
 }
