@@ -15,12 +15,13 @@ set(HEADERS
   src/app/stylesheetmanager.h
   src/views/mainwindow.h
   src/views/eventview.h
+  src/views/venueview.h
   src/views/registrationview.h
   src/views/budgetview.h
-  src/views/dialogs/registrationdialog.h
-  src/views/dialogs/budgetitemdialog.h
   src/views/dialogs/eventdialog.h
   src/views/dialogs/venuedialog.h
+  src/views/dialogs/registrationdialog.h
+  src/views/dialogs/budgetitemdialog.h
 )
 
 set(SOURCES
@@ -29,24 +30,13 @@ set(SOURCES
   src/app/stylesheetmanager.cpp
   src/views/mainwindow.cpp
   src/views/eventview.cpp
+  src/views/venueview.cpp
   src/views/registrationview.cpp
   src/views/budgetview.cpp
-  src/views/dialogs/registrationdialog.cpp
-  src/views/dialogs/budgetitemdialog.cpp
   src/views/dialogs/eventdialog.cpp
   src/views/dialogs/venuedialog.cpp
-)
-
-set(UI_FILES
-  src/views/mainwindow.ui
-  src/views/eventview.ui
-  src/views/venueview.ui
-  src/views/registrationview.ui
-  src/views/budgetview.ui
-  src/views/dialogs/eventdialog.ui
-  src/views/dialogs/venuedialog.ui
-  src/views/dialogs/registrationdialog.ui
-  src/views/dialogs/budgetitemdialog.ui
+  src/views/dialogs/registrationdialog.cpp
+  src/views/dialogs/budgetitemdialog.cpp
 )
 
 set(RESOURCES
@@ -56,7 +46,6 @@ set(RESOURCES
 add_executable(EventManagementSystem
   ${HEADERS}
   ${SOURCES}
-  ${UI_FILES}
   ${RESOURCES}
 )
 

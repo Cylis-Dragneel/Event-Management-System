@@ -11,7 +11,7 @@ debug: cmake_gen
     cmake --build build -j
 
 run: build
-    ./build/src/EventManagementSystem
+    ./build/EventManagementSystem
 
 help:
     @echo "Available commands:"
