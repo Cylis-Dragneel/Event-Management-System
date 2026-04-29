@@ -2,7 +2,7 @@
 #define EVENT_H
 
 #include <string>
-#include "venue.h";
+#include "venue.h"
 using namespace std;
 
 class Event {
