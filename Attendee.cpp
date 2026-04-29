@@ -1,6 +1,5 @@
 #include "Attendee.h"
 #include <iostream>
-#include <stdexcept>
 using namespace std;
 
 Attendee::Attendee() {
@@ -12,65 +11,71 @@ Attendee::Attendee() {
     address = "";
 }
 
+
 Attendee::Attendee(int attendeeId, string firstName, string lastName, string email, string phone, string address) {
     
-    this->attendeeId = attendeeId;
-    this->firstName = firstName;
-    this->lastName = lastName;
-    this->email = email;
-    this->phone = phone;
-    this->address = address;
+    setAttendeeId(attendeeId);
+    setFirstName(firstName);
+    setLastName(lastName);
+    setEmail(email);
+    setPhone(phone);
+    setAddress(address);
 }
 
 Attendee::~Attendee() {}
 
-int Attendee::getAttendeeId() {
-     return attendeeId; 
+int Attendee::getAttendeeId() const {
+    return attendeeId;
 }
-string Attendee::getFirstName() {
-     return firstName;
- }
-string Attendee::getLastName() { 
-    return lastName; 
+
+string Attendee::getFirstName() const {
+    return firstName;
 }
-string Attendee::getFullName() 
-{ 
-    return firstName + " " + lastName; 
+
+string Attendee::getLastName() const {
+    return lastName;
 }
-string Attendee::getEmail(){
-     return email; 
- }
-string Attendee::getPhone() { 
-    return phone; 
+
+string Attendee::getFullName() const {
+    return firstName + " " + lastName;
 }
-string Attendee::getAddress() { 
-    return address; 
+
+string Attendee::getEmail() const {
+    return email;
+}
+
+string Attendee::getPhone() const {
+    return phone;
+}
+
+string Attendee::getAddress() const {
+    return address;
 }
 
 void Attendee::setAttendeeId(int id) {
     if(id > 0) {
-        this->attendeeId = id;
+        attendeeId = id;
     }
     else {
-        throw invalid_argument("Invalid Attendee ID!");
+        throw invalid_argument("Invalid Attendee ID! ID must be positive.");
     }
 }
 
 void Attendee::setFirstName(string name) {
-    if(Validation::isValidName(name)) {
-        this->firstName = name;
+    if(Validation::isValidPersonName(name)) {
+        firstName = name;
     }
     else {
-        throw invalid_argument("Invalid first name!");
+        throw invalid_argument("Invalid first name! Must contain letters, spaces, dash. Min 3 characters.");
     }
 }
 
 void Attendee::setLastName(string name) {
-    if(Validation::isValidName(name)) {
-        this->lastName = name;
+    if(Validation::isValidPersonName(name)) {
+        lastName = name;
     }
     else {
-        throw invalid_argument("Invalid last name!");
+        throw invalid_argument("Invalid last name! Must contain letters, spaces, dash. Min 3 characters.");
     }
 }
 
@@ -79,7 +84,7 @@ void Attendee::setEmail(string email) {
         this->email = email;
     }
     else {
-        throw invalid_argument("Invalid email!");
+        throw invalid_argument("Invalid email! Must contain @ and . after @.");
     }
 }
 
@@ -91,7 +96,7 @@ void Attendee::setPhone(string phone) {
         this->phone = phone;
     }
     else {
-        throw invalid_argument("Invalid phone number! Format: 03XX-XXXXXXX");
+        throw invalid_argument("Invalid phone number! Format: 03XX-XXXXXXX or 042-XXXXXXX.");
     }
 }
 
@@ -99,39 +104,49 @@ void Attendee::setAddress(string address) {
     if(address == "") {
         this->address = address;
     }
-    else if(Validation::isValidAddress(address)) {
+    else if(Validation::isValidText(address)) {
         this->address = address;
     }
     else {
-        throw invalid_argument("Invalid address! Address must be at least 5 characters");
+        throw invalid_argument("Invalid address! Must be at least 5 characters.");
     }
 }
 
-// Validation functions
-bool Attendee::isValidId() {
+bool Attendee::isValidId() const {
     return (attendeeId > 0);
 }
 
-bool Attendee::isValidName() {
-    return (firstName != "" && lastName != "");
+bool Attendee::isValidFirstName() const {
+    if(firstName == "") return false;
+    return Validation::isValidPersonName(firstName);
 }
 
-bool Attendee::isValidEmail() {
+bool Attendee::isValidLastName() const {
+    if(lastName == "") return false;
+    return Validation::isValidPersonName(lastName);
+}
+
+bool Attendee::isValidName() const {
+    return (isValidFirstName() && isValidLastName());
+}
+
+bool Attendee::isValidEmail() const {
+    if(email == "") return false;
     return Validation::isValidEmail(email);
 }
 
-bool Attendee::isValidPhone() {
-    if(phone == "") 
-    return true;
+
+bool Attendee::isValidPhone() const {
+    if(phone == "") return true;
     return Validation::isValidPhone(phone);
 }
 
-bool Attendee::isValidAddress() {
-    if(address == "") 
-    return true;
-    return Validation::isValidAddress(address);
+
+bool Attendee::isValidAddress() const {
+    if(address == "") return true;
+    return Validation::isValidText(address);
 }
 
-bool Attendee::isComplete() {
-    return (isValidId() && isValidName() && isValidEmail() && isValidPhone() && isValidAddress());
+bool Attendee::isComplete() const {
+    return (isValidId() && isValidName() && isValidEmail());
 }

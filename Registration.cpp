@@ -4,11 +4,12 @@
 using namespace std;
 
 Registration::Registration() {
-    registrationId = -1;        
-    attendeeId = -1;           
-    registrationStatus = 1;     // 1 = Pending
-    paymentStatus = 1;          // 1 = Unpaid
-    registrationDate = "";      // Empty date
+    registrationId = -1;
+    eventId = -1;
+    attendeeId = -1;
+    registrationStatus = 1;      // Pending
+    paymentStatus = 1;           // Unpaid
+    registrationDate = "";
     amountPaid = 0;
     totalAmount = 0;
     notes = "";
@@ -18,18 +19,18 @@ Registration::Registration() {
     waitlistQueue = new int[waitlistCapacity];
 }
 
-Registration::Registration(int registrationId, int attendeeId, int registrationStatus, int paymentStatus,
-                           string registrationDate, double amountPaid, double totalAmount, string notes) {
+Registration::Registration(int registrationId, int eventId, int attendeeId, int registrationStatus,  int paymentStatus, string registrationDate, double amountPaid, 
+double totalAmount, string notes) {
     
-
-    this->registrationId = registrationId;
-    this->attendeeId = attendeeId;
-    this->registrationStatus = registrationStatus;
-    this->paymentStatus = paymentStatus;
-    this->registrationDate = registrationDate;
-    this->amountPaid = amountPaid;
-    this->totalAmount = totalAmount;
-    this->notes = notes;
+    setRegistrationId(registrationId);
+    setEventId(eventId);
+    setAttendeeId(attendeeId);
+    setRegistrationStatus(registrationStatus);
+    setPaymentStatus(paymentStatus);
+    setRegistrationDate(registrationDate);
+    setAmountPaid(amountPaid);
+    setTotalAmount(totalAmount);
+    setNotes(notes);
     
     waitlistCapacity = 10;
     waitlistSize = 0;
@@ -40,102 +41,96 @@ Registration::~Registration() {
     delete[] waitlistQueue;
 }
 
-// Doubles the waitlist capacity when it becomes full
 void Registration::resizeWaitlist() {
     int newCapacity = waitlistCapacity * 2;
     int* newQueue = new int[newCapacity];
     
-    // Copy old data to new array
     for(int i = 0; i < waitlistSize; i++) {
         newQueue[i] = waitlistQueue[i];
     }
     
-    // Delete old array 
     delete[] waitlistQueue;
     waitlistQueue = newQueue;
     waitlistCapacity = newCapacity;
 }
 
-// Finds an attendee in waitlist, returns index or -1 if not found
-int Registration::findInWaitlist(int attendeeId) {
+int Registration::findInWaitlist(int attendeeId) const {
     for(int i = 0; i < waitlistSize; i++) {
         if(waitlistQueue[i] == attendeeId) {
-            return i;  // Found
+            return i;
         }
     }
-    return -1;  // Not found
+    return -1;
 }
 
-// Returns current waitlist size
-int Registration::getWaitlistSize() {
+
+int Registration::getWaitlistSize() const {
     return waitlistSize;
 }
 
-// Checks if an attendee is on waitlist
-bool Registration::isOnWaitlist(int attendeeId) {
+bool Registration::isOnWaitlist(int attendeeId) const {
     return (findInWaitlist(attendeeId) != -1);
 }
 
-// Returns position of attendee in waitlist 
-int Registration::getWaitlistPosition(int attendeeId) {
+int Registration::getWaitlistPosition(int attendeeId) const {
     int pos = findInWaitlist(attendeeId);
     if(pos == -1) return -1;
-    return pos + 1;  
+    return pos + 1;
 }
 
-// Adds an attendee to the end of waitlist
 void Registration::addToWaitlist(int attendeeId) {
+    // attendee already on waitlist
     if(isOnWaitlist(attendeeId)) {
         throw invalid_argument("Attendee already on waitlist!");
     }
     
-    // Resize if full
+    // attendee ID invalid
+    if(attendeeId <= 0) {
+        throw invalid_argument("Invalid attendee ID!");
+    }
+    
     if(waitlistSize >= waitlistCapacity) {
         resizeWaitlist();
     }
     
-    // Add at the end
     waitlistQueue[waitlistSize] = attendeeId;
     waitlistSize++;
 }
 
-// Removes an attendee from waitlist
 void Registration::removeFromWaitlist(int attendeeId) {
     int index = findInWaitlist(attendeeId);
+    
+    //  attendee not found
     if(index == -1) {
         throw invalid_argument("Attendee not found in waitlist!");
     }
     
-    // Shift all elements left to fill the gap
     for(int i = index; i < waitlistSize - 1; i++) {
         waitlistQueue[i] = waitlistQueue[i + 1];
     }
     waitlistSize--;
 }
 
-// Returns the next attendee from waitlist without removing
-int Registration::getNextFromWaitlist() {
+int Registration::getNextFromWaitlist() const {
     if(waitlistSize == 0) {
         return -1;
     }
     return waitlistQueue[0];
 }
 
-// Removes and promotes the next attendee from waitlist
 void Registration::promoteNextFromWaitlist() {
+    //  waitlist empty
     if(waitlistSize == 0) {
         throw invalid_argument("Waitlist is empty!");
     }
     
-    // Shift all elements left (remove first)
     for(int i = 0; i < waitlistSize - 1; i++) {
         waitlistQueue[i] = waitlistQueue[i + 1];
     }
     waitlistSize--;
 }
 
-// Prints the entire waitlist 
-void Registration::printWaitlist() {
+void Registration::printWaitlist() const {
     if(waitlistSize == 0) {
         cout << "Waitlist is empty" << endl;
         return;
@@ -150,40 +145,49 @@ void Registration::printWaitlist() {
 }
 
 
-int Registration::getRegistrationId() { 
+int Registration::getRegistrationId() const { 
     return registrationId;
- }
-int Registration::getAttendeeId() {
-     return attendeeId; 
 }
-int Registration::getRegistrationStatus() { 
-    return registrationStatus; 
+int Registration::getEventId() const { 
+    return eventId; 
 }
-int Registration::getPaymentStatus() { 
-    return paymentStatus; 
-
+int Registration::getAttendeeId() const {
+    return attendeeId;
 }
-string Registration::getRegistrationDate() { 
+int Registration::getRegistrationStatus() const { 
+   return registrationStatus; 
+}
+int Registration::getPaymentStatus() const {
+     return paymentStatus;
+}
+string Registration::getRegistrationDate() const { 
     return registrationDate;
 }
-double Registration::getAmountPaid() {
-    
-    return amountPaid;
- }
-double Registration::getTotalAmount() {
-     return totalAmount;
- }
-string Registration::getNotes() { 
-    return notes;
- }
-
+double Registration::getAmountPaid() const {
+     return amountPaid; 
+}
+double Registration::getTotalAmount() const { 
+    return totalAmount; 
+}
+string Registration::getNotes() const {
+    return notes; 
+}
 
 void Registration::setRegistrationId(int id) {
     if(id > 0) {
         registrationId = id;
     }
     else {
-        throw invalid_argument("Invalid registration ID! ID must be positive");
+        throw invalid_argument("Invalid registration ID! Must be positive.");
+    }
+}
+
+void Registration::setEventId(int id) {
+    if(id > 0) {
+        eventId = id;
+    }
+    else {
+        throw invalid_argument("Invalid event ID! Must be positive.");
     }
 }
 
@@ -192,12 +196,12 @@ void Registration::setAttendeeId(int id) {
         attendeeId = id;
     }
     else {
-        throw invalid_argument("Invalid attendee ID! ID must be positive");
+        throw invalid_argument("Invalid attendee ID! Must be positive.");
     }
 }
 
-// Sets registration status - must be between 1 and 4
 void Registration::setRegistrationStatus(int status) {
+    //  status must be 1-4
     if(status >= 1 && status <= 4) {
         registrationStatus = status;
     }
@@ -206,8 +210,8 @@ void Registration::setRegistrationStatus(int status) {
     }
 }
 
-// Sets payment status - must be between 1 and 4
 void Registration::setPaymentStatus(int status) {
+    //  payment status must be 1-4
     if(status >= 1 && status <= 4) {
         paymentStatus = status;
     }
@@ -217,19 +221,25 @@ void Registration::setPaymentStatus(int status) {
 }
 
 void Registration::setRegistrationDate(string date) {
-    if(Validation::isValidDate(date)) {
-        registrationDate = date;
+    // Check format 
+    if(date.length() != 10 || date[2] != '-' || date[5] != '-') {
+        throw invalid_argument("Invalid date format! Use DD-MM-YYYY");
     }
-    else {
-        throw invalid_argument("Invalid date! Use DD-MM-YYYY format");
+    
+    if(!Validation::isValidDate(date)) {
+        throw invalid_argument("Invalid date! Day/month/year values are incorrect");
     }
+    
+    registrationDate = date;
 }
 
 void Registration::setAmountPaid(double amount) {
+    // amount cannot be negative
     if(amount < 0) {
         throw invalid_argument("Amount paid cannot be negative!");
     }
     
+    //  amount cannot exceed total amount
     if(amount > totalAmount && totalAmount > 0) {
         throw invalid_argument("Amount paid cannot exceed total amount!");
     }
@@ -249,37 +259,38 @@ void Registration::setAmountPaid(double amount) {
 }
 
 void Registration::setTotalAmount(double amount) {
+    // Edge case: amount cannot be negative
     if(amount < 0) {
         throw invalid_argument("Total amount cannot be negative!");
     }
     
+    // Edge case: new total cannot be less than already paid
     if(amountPaid > amount) {
         throw invalid_argument("New total cannot be less than amount already paid!");
     }
     
     totalAmount = amount;
     
-
+    // Update payment status if needed
     if(amountPaid >= totalAmount && totalAmount > 0) {
         paymentStatus = 2;  // Paid
     }
 }
 
-// Sets notes 
 void Registration::setNotes(string notes) {
     this->notes = notes;
 }
 
-double Registration::getRemainingBalance() {
+
+double Registration::getRemainingBalance() const {
     return totalAmount - amountPaid;
 }
 
-bool Registration::isFullyPaid() {
+bool Registration::isFullyPaid() const {
     return (amountPaid >= totalAmount && totalAmount > 0);
 }
 
-// Converts registration status number to readable text
-string Registration::getRegistrationStatusText() {
+string Registration::getRegistrationStatusText() const {
     switch(registrationStatus) {
         case 1: return "Pending";
         case 2: return "Confirmed";
@@ -289,8 +300,7 @@ string Registration::getRegistrationStatusText() {
     }
 }
 
-// Converts payment status number to readable text
-string Registration::getPaymentStatusText() {
+string Registration::getPaymentStatusText() const {
     switch(paymentStatus) {
         case 1: return "Unpaid";
         case 2: return "Paid";
@@ -300,24 +310,28 @@ string Registration::getPaymentStatusText() {
     }
 }
 
+
 bool Registration::makePayment(double amount) {
+    //  amount must be positive
     if(amount <= 0) {
         throw invalid_argument("Payment amount must be greater than zero!");
     }
     
+    //  already fully paid
     if(isFullyPaid()) {
         throw invalid_argument("Already fully paid!");
     }
     
+    //  payment would exceed total amount
     if(amountPaid + amount > totalAmount) {
         throw invalid_argument("Payment exceeds remaining balance!");
     }
     
+    //  cancelled registration 
     if(registrationStatus == 3) {
         throw invalid_argument("Cannot pay - registration is cancelled!");
     }
     
-    // Process payment
     amountPaid += amount;
     
     // Update payment status
@@ -333,24 +347,22 @@ bool Registration::makePayment(double amount) {
     return true;
 }
 
-// Process a refund
 bool Registration::refundPayment(double amount) {
-    // Validate refund amount
+    //  amount must be positive
     if(amount <= 0) {
         throw invalid_argument("Refund amount must be greater than zero!");
     }
     
-    // Check if any payment was made
+    //  no payment to refund
     if(amountPaid <= 0) {
         throw invalid_argument("No payment to refund!");
     }
     
-    // Check if refund exceeds paid amount
+    //  refund exceeds amount paid
     if(amount > amountPaid) {
         throw invalid_argument("Refund exceeds amount paid!");
     }
     
-    // Process refund
     amountPaid -= amount;
     
     // Update payment status
@@ -368,14 +380,17 @@ bool Registration::refundPayment(double amount) {
 }
 
 void Registration::confirmRegistration() {
+    // already confirmed
     if(registrationStatus == 2) {
         throw invalid_argument("Registration already confirmed!");
     }
     
+    // cancelled registration cannot be confirmed
     if(registrationStatus == 3) {
         throw invalid_argument("Cannot confirm cancelled registration!");
     }
-
+    
+    // Can confirm Pending(1) or Waitlisted(4)
     if(registrationStatus == 1 || registrationStatus == 4) {
         registrationStatus = 2;
         cout << "Registration confirmed!" << endl;
@@ -383,10 +398,12 @@ void Registration::confirmRegistration() {
 }
 
 void Registration::cancelRegistration() {
+    //  already cancelled
     if(registrationStatus == 3) {
         throw invalid_argument("Registration already cancelled!");
     }
-
+    
+    // Can cancel Pending(1), Confirmed(2), or Waitlisted(4)
     if(registrationStatus == 1 || registrationStatus == 2 || registrationStatus == 4) {
         registrationStatus = 3;
         cout << "Registration cancelled!" << endl;
@@ -398,10 +415,12 @@ void Registration::cancelRegistration() {
 }
 
 void Registration::moveToWaitlist() {
+    //  already on waitlist
     if(registrationStatus == 4) {
         throw invalid_argument("Already on waitlist!");
     }
-
+    
+    // Only Pending(1) can move to waitlist
     if(registrationStatus == 1) {
         registrationStatus = 4;
         cout << "Moved to waitlist!" << endl;
@@ -414,8 +433,8 @@ void Registration::moveToWaitlist() {
     }
 }
 
-// Moves registration from waitlist to confirmed (when seat available)
 void Registration::moveFromWaitlistToConfirmed() {
+    //  not on waitlist
     if(registrationStatus != 4) {
         throw invalid_argument("Registration is not on waitlist!");
     }

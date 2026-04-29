@@ -33,6 +33,14 @@ bool validDate(int day, int month, int year) {
     return true;
 } 
 
+// checks if string contains only spaces(invalid)
+bool isNotOnlySpaces(const string& s) {
+    for(int i = 0; i < (int)s.length(); i++) {
+        if(s[i] != ' ') return true;
+    }
+    return false;
+}
+
 bool Validation::isValidDate(string date) {
     // format should be "DD-MM-YYYY"
     if (date.length() != 10) {
@@ -103,84 +111,101 @@ bool Validation::isValidTime(string time) {
 }
 
 bool Validation::isValidName(string name) {
-    if(name.length() < 2) {
+    if(name.length() < 3) {
         return false;
     }
-
-    // Check if only spaces
-    bool onlySpaces = true;
-    for(int i = 0; i < name.length(); i++) {
-        if(name[i] != ' ') {
-            onlySpaces = false;
-            break;
-        }
-    }
-    if(onlySpaces) {
+    if(!isNotOnlySpaces(name)) {
         return false;
-    }
+    }    
         
     // Check if contains at least one letter (allow spaces and dash)
-    bool hasLetter = false;
+    bool hasLetterOrDigit = false;
     for(int i = 0; i < name.length(); i++) {
-        if(isalpha(name[i])) {
-            hasLetter = true;
+        if(isalpha(name[i]) || isdigit(name[i])) {
+            hasLetterOrDigit = true;
         }
-        else if(name[i] != ' ' && name[i] != '-') {
+        else if(name[i] != ' '  && name[i] != '-' && name[i] != '&'  && name[i] != '\'' &&
+                name[i] != '('  && name[i] != ')'  && name[i] != '.'  && name[i] != '/'  &&
+                name[i] != '+'  && name[i] != ':') {
             return false;  // Invalid character found
         }
     }
-    
-    if(!hasLetter) {
-        return false;  
-    }
-
-    return true;
+    return hasLetterOrDigit;
 }
 
-bool Validation::isValidAddress(string address) {
-    if(address.length() < 5) {
+bool Validation::isValidPersonName(string pName) {
+    if(pName.length() < 3) {
         return false;
     }
+    if(!isNotOnlySpaces(pName)) {
+        return false;
+    } 
 
-    // Check if only spaces
-    bool onlySpaces = true;
-    for(int i = 0; i < address.length(); i++) {
-        if(address[i] != ' ') {
-            onlySpaces = false;
-            break;
+    // Check if contains at least one letter (allow spaces & dash)
+    bool hasLetter = false;
+    for(int i = 0; i < pName.length(); i++) {
+        if(isalpha(pName[i])) {
+            hasLetter = true;
+        }
+        else if(pName[i] != ' '  && pName[i] != '-') {
+            return false;
         }
     }
-    if(onlySpaces) {
+    return hasLetter;
+}
+
+bool Validation::isValidText(string text) {
+    if(text.length() < 5) {
         return false;
     }
+    if(!isNotOnlySpaces(text)) {
+        return false;
+    } 
 
-    return true;
+    bool hasLetterOrDigit = false;
+    for(int i = 0; i < text.length(); i++) {
+        if(isalpha(text[i]) || isdigit(text[i])) {
+            hasLetterOrDigit = true;
+        }
+        else if(text[i] != ' '  && text[i] != '-' && text[i] != ','  && text[i] != '.'  &&
+                text[i] != '\'' && text[i] != '&'  && text[i] != '('  && text[i] != ')'  &&
+                text[i] != '/'  && text[i] != ':') {
+            return false;
+        }
+    }
+    return hasLetterOrDigit;
 }
 
 bool Validation::isValidPhone(string contactNumber) {
+    // Allow format: 042-12345678/0300-1234567
     if (contactNumber.length() != 12) {
-        return false;
-    }
-    if (contactNumber[4] != '-') {
         return false;
     }
     if (contactNumber[0] != '0') {
         return false;
     }
-    if (contactNumber[1] != '3') {
-        return false;
+    
+    int dashPos;
+    if (contactNumber[3] == '-') {
+        dashPos = 3;  
+    }
+    else if (contactNumber[4] == '-') {
+        dashPos = 4;   
+    }
+    else {
+        return false;  
     }
     
-    string preDashStr = contactNumber.substr(0, 4);
-    string postDashStr = contactNumber.substr(5, 7);
+    string preDashStr = contactNumber.substr(0, dashPos);
+    string postDashStr = contactNumber.substr(dashPos + 1);
     
-    // Check if all are digits
-    for(int i=0; i<preDashStr.length(); i++) {
+    for(int i = 0; i < preDashStr.length(); i++) {
         if (!isdigit(preDashStr[i])) return false;
     }
-    for(int i=0; i<postDashStr.length(); i++) {
+    for(int i = 0; i < postDashStr.length(); i++) {
         if (!isdigit(postDashStr[i])) return false;
     }
+    
     return true;
 }
 
@@ -206,13 +231,25 @@ bool Validation::isValidEmail(string contactEmail) {
         return false;
     }
 
-    // Check if there is '.' after @
-    bool foundDot = true;
+    // Check if there is atleast one '.' after @
+    bool foundDot = false;
     for(int i = atPos+1; i < contactEmail.length(); i++) {
-        if(contactEmail[i] != '.') {
-            foundDot = false;
-            break;
+        if(contactEmail[i] == '.') {
+            foundDot = true;
         }
     }
-    return foundDot;
+    if(!foundDot) {
+        return false;
+    }
+
+    // check if '.' is not last character 
+    if(contactEmail[contactEmail.length() - 1] == '.') {
+        return false;
+    } 
+    // check if '.' is not immediately after @ 
+    if(contactEmail[atPos + 1] == '.') {
+        return false;
+    }
+
+    return true;
 }

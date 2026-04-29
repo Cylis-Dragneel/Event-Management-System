@@ -8,44 +8,50 @@ using namespace std;
 
 class Registration {
 private:
-
-    int registrationId;     
-    int attendeeId;         
+    int registrationId;
+    int eventId;
+    int attendeeId;
     int registrationStatus;  // 1=Pending, 2=Confirmed, 3=Cancelled, 4=Waitlisted
     int paymentStatus;       // 1=Unpaid, 2=Paid, 3=Refunded, 4=Partial
-    string registrationDate; // Date of registration (DD-MM-YYYY)
-    double amountPaid;       // How much money paid so far
-    double totalAmount;      // Total amount to be paid
-    string notes;            // Extra information
+    string registrationDate;
+    double amountPaid;
+    double totalAmount;
+    string notes;
     
-    int* waitlistQueue;      // Dynamic array for waitlist (FIFO queue)
-    int waitlistSize;        // Current number of people in waitlist
-    int waitlistCapacity;    // Maximum capacity of waitlist array
+    // Waitlist data
+    int* waitlistQueue;
+    int waitlistSize;
+    int waitlistCapacity;
 
 public:
-    Registration(); 
-    Registration(int registrationId, int attendeeId, int registrationStatus, int paymentStatus,
-                 string registrationDate, double amountPaid, double totalAmount, string notes);  
+    // Constructors
+    Registration();
+    Registration(int registrationId, int eventId, int attendeeId, int registrationStatus, 
+                 int paymentStatus, string registrationDate, double amountPaid, 
+                 double totalAmount, string notes);
     
+    // Destructor
     ~Registration();
     
-
-    int getRegistrationId();
-    int getAttendeeId();
-    int getRegistrationStatus();
-    int getPaymentStatus();
-    string getRegistrationDate();
-    double getAmountPaid();
-    double getTotalAmount();
-    string getNotes();
+    // Getters with const
+    int getRegistrationId() const;
+    int getEventId() const;
+    int getAttendeeId() const;
+    int getRegistrationStatus() const;
+    int getPaymentStatus() const;
+    string getRegistrationDate() const;
+    double getAmountPaid() const;
+    double getTotalAmount() const;
+    string getNotes() const;
     
     // Waitlist getters
-    int getWaitlistSize();
-    int getWaitlistPosition(int attendeeId);
-    bool isOnWaitlist(int attendeeId);
+    int getWaitlistSize() const;
+    int getWaitlistPosition(int attendeeId) const;
+    bool isOnWaitlist(int attendeeId) const;
     
     // Setters with validation
     void setRegistrationId(int id);
+    void setEventId(int id);
     void setAttendeeId(int id);
     void setRegistrationStatus(int status);
     void setPaymentStatus(int status);
@@ -54,32 +60,32 @@ public:
     void setTotalAmount(double amount);
     void setNotes(string notes);
     
-    //calculations
-    double getRemainingBalance();
-    bool isFullyPaid();
-    string getRegistrationStatusText();
-    string getPaymentStatusText();
-
+    // Business methods
+    double getRemainingBalance() const;
+    bool isFullyPaid() const;
+    string getRegistrationStatusText() const;
+    string getPaymentStatusText() const;
+    
+    // Payment methods
     bool makePayment(double amount);
     bool refundPayment(double amount);
     
-    // Status change methods
+    // Status methods
     void confirmRegistration();
     void cancelRegistration();
     void moveToWaitlist();
     void moveFromWaitlistToConfirmed();
     
-    // Waitlist management 
+    // Waitlist methods
     void addToWaitlist(int attendeeId);
     void removeFromWaitlist(int attendeeId);
-    int getNextFromWaitlist();
+    int getNextFromWaitlist() const;
     void promoteNextFromWaitlist();
-    void printWaitlist();
+    void printWaitlist() const;
 
 private:
-    
-    void resizeWaitlist();        // Increase waitlist capacity when full
-    int findInWaitlist(int attendeeId);  // Find attendee in waitlist
+    void resizeWaitlist();
+    int findInWaitlist(int attendeeId) const;
 };
 
 #endif

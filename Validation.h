@@ -8,8 +8,9 @@ class Validation {
 public:
     static bool isValidDate(string date);
     static bool isValidTime(string time);
-    static bool isValidName(string name);
-    static bool isValidAddress(string address);
+    static bool isValidName(string name); // for name
+    static bool isValidPersonName(string pName);
+    static bool isValidText(string text); // for address, description, budget feature
     static bool isValidEmail(string email);
     static bool isValidPhone(string phone);
 };

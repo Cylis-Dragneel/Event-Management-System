@@ -17,21 +17,19 @@ private:
     string address;
 
 public:
+   
     Attendee();
     Attendee(int attendeeId, string firstName, string lastName, string email, string phone, string address);
     
-    // Destructor
     ~Attendee();
     
-    // Getters
-    int getAttendeeId();
-    string getFirstName();
-    string getLastName();
-    string getFullName();
-    string getEmail();
-    string getPhone();
-    string getAddress();
-    
+    int getAttendeeId() const;
+    string getFirstName() const;
+    string getLastName() const;
+    string getFullName() const;
+    string getEmail() const;
+    string getPhone() const;
+    string getAddress() const;
     
     void setAttendeeId(int id);
     void setFirstName(string name);
@@ -40,13 +38,14 @@ public:
     void setPhone(string phone);
     void setAddress(string address);
     
-    // Validation
-    bool isValidId();
-    bool isValidName();
-    bool isValidEmail();
-    bool isValidPhone();
-    bool isValidAddress();
-    bool isComplete();
+    // ALL Validation functions 
+    bool isValidId() const;
+    bool isValidFirstName() const;
+    bool isValidLastName() const;
+    bool isValidName() const;           
+    bool isValidEmail() const;
+    bool isValidPhone() const;
+    bool isValidAddress() const;
+    bool isComplete() const;             
 };
-
 #endif
