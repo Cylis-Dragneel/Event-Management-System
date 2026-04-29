@@ -1,12 +1,11 @@
 #ifndef EVENT_H
 #define EVENT_H
 
-#include "venue.h"
 #include <string>
+#include "venue.h";
 using namespace std;
 
-class Event
-{
+class Event {
 private:
     static int nextEventId;
     int eventId;
@@ -18,13 +17,13 @@ private:
     int capacity; // Max attendees(10-500)
     int status;   // 0=Draft, 1=Published, 2=Completed, 3=Cancelled
     int type;     // 0=Conference, 1=Workshop, 2=Concert, 3=Wedding, 4=Corporate, 5=Social
-    Venue venue;
+    int venueId;
 
 public:
     // Constructors
     Event();
     Event(string name, string description, string date, string time,
-          int duration, int capacity, int type);
+            int duration, int capacity, int type);
 
     // Setters
     void setName(string n);
@@ -34,7 +33,7 @@ public:
     void setDuration(int dur);
     void setCapacity(int cap);
     void setType(int t);
-    void setVenue(Venue venue);
+    void setVenueId(int venueId);
 
     // Getters
     int getEventId() const;
@@ -48,9 +47,7 @@ public:
     int getStatus() const;
     string getTypeText() const;
     string getStatusText() const;
-
-    Venue getVenue();
-    int getVenueId();
+    int getVenueId() const;
 
     bool changeStatus(int newStatus);
 
@@ -60,6 +57,7 @@ public:
     bool isOnDate(string searchDate);
     bool matchesKeyword(string keyword);
 
+    bool hasVenue() const;
     bool isCompatibleWithVenue(const Venue &venue) const;
 };
 

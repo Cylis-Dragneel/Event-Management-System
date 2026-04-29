@@ -2,7 +2,7 @@
 #include "validation.h"
 #include <iostream>
 using namespace std;
-
+ 
 int Event::nextEventId = 1;  
 
 Event::Event() {
@@ -15,6 +15,7 @@ Event::Event() {
     capacity = 0;
     status = 0; // Draft by default
     type = 0;  // Conference by default
+    venueId = 0;
 }
 
 Event::Event(string name, string description, string date, string time, int duration, int capacity, int type) {
@@ -27,6 +28,7 @@ Event::Event(string name, string description, string date, string time, int dura
     setDuration(duration);
     setType(type);
     status = 0; // default
+    venueId = 0;
 }
 
 // SETTERS
@@ -94,8 +96,11 @@ void Event::setType(int type) {
     }
 }
 
-void Event::setVenue(Venue venue) {
-    this->venue = venue;
+void Event::setVenueId(int venueId) {
+    if(venueId > 0)
+        this->venueId = venueId;
+    else
+        throw invalid_argument("Invalid venue ID!");
 }
 
 // GETTERS 
@@ -123,11 +128,11 @@ int Event::getCapacity() const {
 int Event::getType() const { 
     return type; 
 }
-Venue Event::getVenue() {
-    return venue;
+int Event::getVenueId() const {
+    return venueId;
 }
-int Event::getVenueId() {
-    return venue.getVenueId();
+bool Event::hasVenue() const {
+    return venueId != 0;  // convenience check — useful for GUI
 }
 
 string Event::getTypeText() const {
