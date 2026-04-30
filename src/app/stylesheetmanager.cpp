@@ -4,8 +4,6 @@
 #include <QFile>
 #include <QTextStream>
 
-namespace app {
-
 void StylesheetManager::apply(QApplication &application) const {
     QFile stylesheetFile(":/styles/material.qss");
     if (stylesheetFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -13,5 +11,3 @@ void StylesheetManager::apply(QApplication &application) const {
         application.setStyleSheet(stream.readAll());
     }
 }
-
-}  // namespace app

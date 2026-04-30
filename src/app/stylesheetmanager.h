@@ -3,13 +3,9 @@
 
 class QApplication;
 
-namespace app {
-
 class StylesheetManager {
 public:
     void apply(QApplication &application) const;
 };
-
-}  // namespace app
 
 #endif

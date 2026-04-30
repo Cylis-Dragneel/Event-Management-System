@@ -3,8 +3,6 @@
 
 #include <QApplication>
 
-namespace app {
-
 class Application {
 public:
     Application(int &argc, char **argv);
@@ -13,7 +11,5 @@ public:
 private:
     QApplication qtApplication;
 };
-
-}  // namespace app
 
 #endif
