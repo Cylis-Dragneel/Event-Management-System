@@ -22,6 +22,12 @@ set(HEADERS
   src/views/dialogs/venuedialog.h
   src/views/dialogs/registrationdialog.h
   src/views/dialogs/budgetitemdialog.h
+  src/models/event.h
+  src/models/venue.h
+  src/models/validation.h
+  src/models/BudgetItem.h
+  src/models/EventBudget.h
+  src/models/BudgetManager.h
 )
 
 set(SOURCES
@@ -37,6 +43,12 @@ set(SOURCES
   src/views/dialogs/venuedialog.cpp
   src/views/dialogs/registrationdialog.cpp
   src/views/dialogs/budgetitemdialog.cpp
+  src/models/event.cpp
+  src/models/venue.cpp
+  src/models/validation.cpp
+  src/models/budgetitem.cpp
+  src/models/EventBudget.cpp
+  src/models/BudgetManager.cpp
 )
 
 set(RESOURCES
