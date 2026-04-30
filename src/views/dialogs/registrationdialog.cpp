@@ -9,9 +9,6 @@
 #include <QPlainTextEdit>
 #include <QVBoxLayout>
 
-namespace views {
-namespace dialogs {
-
 RegistrationDialog::RegistrationDialog(QWidget *parent)
     : QDialog(parent),
       attendeeNameEdit(new QLineEdit(this)),
@@ -58,5 +55,3 @@ RegistrationDialog::RegistrationDialog(QWidget *parent)
     QObject::connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
 
-}  // namespace dialogs
-}  // namespace views

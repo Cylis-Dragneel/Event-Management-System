@@ -9,9 +9,6 @@
 #include <QLineEdit>
 #include <QVBoxLayout>
 
-namespace views {
-namespace dialogs {
-
 BudgetItemDialog::BudgetItemDialog(const QString &itemType, QWidget *parent)
     : QDialog(parent),
       eventEdit(new QComboBox(this)),
@@ -63,6 +60,3 @@ BudgetItemDialog::BudgetItemDialog(const QString &itemType, QWidget *parent)
     QObject::connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
     QObject::connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
-
-}  // namespace dialogs
-}  // namespace views

@@ -9,9 +9,6 @@ class QLineEdit;
 class QPlainTextEdit;
 class QSpinBox;
 
-namespace views {
-namespace dialogs {
-
 class VenueDialog : public QDialog {
 public:
     explicit VenueDialog(QWidget *parent = nullptr);
@@ -26,8 +23,5 @@ private:
     QLineEdit *contactEdit;
     QDialogButtonBox *buttonBox;
 };
-
-}  // namespace dialogs
-}  // namespace views
 
 #endif

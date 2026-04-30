@@ -9,9 +9,6 @@ class QDialogButtonBox;
 class QLineEdit;
 class QPlainTextEdit;
 
-namespace views {
-namespace dialogs {
-
 class RegistrationDialog : public QDialog {
 public:
     explicit RegistrationDialog(QWidget *parent = nullptr);
@@ -26,8 +23,5 @@ private:
     QPlainTextEdit *notesEdit;
     QDialogButtonBox *buttonBox;
 };
-
-}  // namespace dialogs
-}  // namespace views
 
 #endif

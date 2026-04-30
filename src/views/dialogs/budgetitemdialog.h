@@ -9,9 +9,6 @@ class QDialogButtonBox;
 class QDoubleSpinBox;
 class QLineEdit;
 
-namespace views {
-namespace dialogs {
-
 class BudgetItemDialog : public QDialog {
 public:
     explicit BudgetItemDialog(const QString &itemType, QWidget *parent = nullptr);
@@ -27,8 +24,5 @@ private:
     QLineEdit *vendorEdit;
     QDialogButtonBox *buttonBox;
 };
-
-}  // namespace dialogs
-}  // namespace views
 
 #endif

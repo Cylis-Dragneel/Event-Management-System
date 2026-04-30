@@ -8,9 +8,6 @@
 #include <QSpinBox>
 #include <QVBoxLayout>
 
-namespace views {
-namespace dialogs {
-
 VenueDialog::VenueDialog(QWidget *parent)
     : QDialog(parent),
       nameEdit(new QLineEdit(this)),
@@ -59,5 +56,3 @@ VenueDialog::VenueDialog(QWidget *parent)
     QObject::connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
 
-}  // namespace dialogs
-}  // namespace views

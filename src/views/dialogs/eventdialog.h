@@ -10,9 +10,6 @@ class QPlainTextEdit;
 class QSpinBox;
 class QLineEdit;
 
-namespace views {
-namespace dialogs {
-
 class EventDialog : public QDialog {
 public:
     explicit EventDialog(QWidget *parent = nullptr);
@@ -28,8 +25,5 @@ private:
     QComboBox *statusEdit;
     QDialogButtonBox *buttonBox;
 };
-
-}  // namespace dialogs
-}  // namespace views
 
 #endif
