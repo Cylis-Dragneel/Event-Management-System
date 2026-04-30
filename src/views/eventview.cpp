@@ -13,9 +13,8 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QTableWidget>
+#include <QTableWidgetItem>
 #include <QVBoxLayout>
-
-namespace views {
 
 EventView::EventView(bool organizerMode, QWidget *parent)
     : QWidget(parent),
@@ -29,7 +28,10 @@ EventView::EventView(bool organizerMode, QWidget *parent)
       addButton(new QPushButton("Create Event", this)),
       editButton(new QPushButton("Edit Event", this)),
       deleteButton(new QPushButton("Delete Event", this)),
-      refreshButton(new QPushButton("Refresh", this)) {
+      refreshButton(new QPushButton("Refresh", this)),
+      events(nullptr),
+      eventCount(0),
+      eventCapacity(0) {
     auto *mainLayout = new QVBoxLayout(this);
 
     auto *filtersLayout = new QFormLayout();
@@ -71,8 +73,15 @@ EventView::EventView(bool organizerMode, QWidget *parent)
     editButton->setEnabled(isOrganizerMode);
     deleteButton->setEnabled(isOrganizerMode);
 
+    seedEvents();
+    rebuildTable();
+
+    QObject::connect(refreshButton, &QPushButton::clicked, this, [this]() {
+        rebuildTable();
+    });
+
     QObject::connect(addButton, &QPushButton::clicked, this, [this]() {
-        dialogs::EventDialog dialog(this);
+        EventDialog dialog(this);
         dialog.exec();
     });
 
@@ -81,7 +90,7 @@ EventView::EventView(bool organizerMode, QWidget *parent)
             QMessageBox::information(this, "Edit Event", "Select an event row first.");
             return;
         }
-        dialogs::EventDialog dialog(this);
+        EventDialog dialog(this);
         dialog.exec();
     });
 
@@ -94,4 +103,84 @@ EventView::EventView(bool organizerMode, QWidget *parent)
     });
 }
 
-}  // namespace views
+EventView::~EventView() {
+    delete[] events;
+}
+
+void EventView::ensureEventCapacity(int requiredCount) {
+    if (requiredCount <= eventCapacity) {
+        return;
+    }
+
+    int nextCapacity = eventCapacity > 0 ? eventCapacity : 1;
+    while (nextCapacity < requiredCount) {
+        nextCapacity *= 2;
+    }
+
+    Event *nextEvents = new Event[nextCapacity];
+    Event *source = events;
+    Event *target = nextEvents;
+    int remaining = eventCount;
+    while (remaining > 0) {
+        *target = *source;
+        ++target;
+        ++source;
+        --remaining;
+    }
+
+    delete[] events;
+    events = nextEvents;
+    eventCapacity = nextCapacity;
+}
+
+void EventView::appendEvent(const Event &event) {
+    ensureEventCapacity(eventCount + 1);
+    Event *tail = events + eventCount;
+    *tail = event;
+    ++eventCount;
+}
+
+void EventView::seedEvents() {
+    appendEvent(Event("Tech Summit 2026", "Annual technology conference", "15-09-2026", "10:00", 180, 300, 0));
+    appendEvent(Event("Design Workshop", "Hands-on design sprint", "22-08-2026", "09:30", 120, 60, 1));
+    appendEvent(Event("Community Concert", "Outdoor social music event", "05-10-2026", "18:30", 150, 500, 2));
+
+    Event *first = events;
+    first->setVenueId(101);
+
+    Event *second = events + 1;
+    second->setVenueId(203);
+    second->changeStatus(1);
+
+    Event *third = events + 2;
+    third->setVenueId(305);
+    third->changeStatus(1);
+}
+
+void EventView::rebuildTable() {
+    eventsTable->setRowCount(0);
+
+    Event *current = events;
+    int remaining = eventCount;
+    while (remaining > 0) {
+        const int row = eventsTable->rowCount();
+        eventsTable->insertRow(row);
+
+        const QString durationText = QString::number(current->getDuration()) + " min";
+        const QString capacityText = QString::number(current->getCapacity());
+        const QString venueText = current->hasVenue() ? QString::number(current->getVenueId()) : QString("Unassigned");
+
+        eventsTable->setItem(row, 0, new QTableWidgetItem(QString::fromStdString(current->getName())));
+        eventsTable->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(current->getDate() + " " + current->getTime())));
+        eventsTable->setItem(row, 2, new QTableWidgetItem(durationText));
+        eventsTable->setItem(row, 3, new QTableWidgetItem(QString::fromStdString(current->getTypeText())));
+        eventsTable->setItem(row, 4, new QTableWidgetItem(capacityText));
+        eventsTable->setItem(row, 5, new QTableWidgetItem(venueText));
+        eventsTable->setItem(row, 6, new QTableWidgetItem(QString::fromStdString(current->getStatusText())));
+        eventsTable->setItem(row, 7, new QTableWidgetItem("0"));
+
+        ++current;
+        --remaining;
+    }
+}
+

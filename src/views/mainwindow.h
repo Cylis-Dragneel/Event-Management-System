@@ -8,8 +8,6 @@ class QComboBox;
 class QStackedWidget;
 class QWidget;
 
-namespace views {
-
 class EventView;
 class VenueView;
 class RegistrationView;
@@ -36,7 +34,5 @@ private:
     EventView *attendeeEventView;
     RegistrationView *attendeeRegistrationView;
 };
-
-}
 
 #endif

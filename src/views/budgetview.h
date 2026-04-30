@@ -9,8 +9,6 @@ class QLabel;
 class QPushButton;
 class QTableWidget;
 
-namespace views {
-
 class BudgetView : public QWidget {
 public:
     explicit BudgetView(bool organizerMode, QWidget *parent = nullptr);
@@ -30,7 +28,5 @@ private:
     QPushButton *deleteItemButton;
     QPushButton *refreshButton;
 };
-
-}  // namespace views
 
 #endif

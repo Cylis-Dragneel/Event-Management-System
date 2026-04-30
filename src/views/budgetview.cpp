@@ -15,8 +15,6 @@
 #include <QTableWidget>
 #include <QVBoxLayout>
 
-namespace views {
-
 BudgetView::BudgetView(bool organizerMode, QWidget *parent)
     : QWidget(parent),
       isOrganizerMode(organizerMode),
@@ -79,12 +77,12 @@ BudgetView::BudgetView(bool organizerMode, QWidget *parent)
     deleteItemButton->setEnabled(isOrganizerMode);
 
     QObject::connect(addIncomeButton, &QPushButton::clicked, this, [this]() {
-        dialogs::BudgetItemDialog dialog("Income", this);
+        BudgetItemDialog dialog("Income", this);
         dialog.exec();
     });
 
     QObject::connect(addExpenseButton, &QPushButton::clicked, this, [this]() {
-        dialogs::BudgetItemDialog dialog("Expense", this);
+        BudgetItemDialog dialog("Expense", this);
         dialog.exec();
     });
 
@@ -97,4 +95,3 @@ BudgetView::BudgetView(bool organizerMode, QWidget *parent)
     });
 }
 
-}  // namespace views

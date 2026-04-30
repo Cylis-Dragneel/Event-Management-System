@@ -14,8 +14,6 @@
 #include <QTableWidget>
 #include <QVBoxLayout>
 
-namespace views {
-
 RegistrationView::RegistrationView(bool organizerMode, QWidget *parent)
     : QWidget(parent),
       isOrganizerMode(organizerMode),
@@ -73,7 +71,7 @@ RegistrationView::RegistrationView(bool organizerMode, QWidget *parent)
     exportButton->setEnabled(isOrganizerMode);
 
     QObject::connect(registerButton, &QPushButton::clicked, this, [this]() {
-        dialogs::RegistrationDialog dialog(this);
+        RegistrationDialog dialog(this);
         dialog.exec();
     });
 
@@ -98,4 +96,3 @@ RegistrationView::RegistrationView(bool organizerMode, QWidget *parent)
     });
 }
 
-}  // namespace views

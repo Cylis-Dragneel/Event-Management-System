@@ -13,8 +13,6 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-namespace views {
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       central(nullptr),
@@ -87,4 +85,3 @@ void MainWindow::applyRole(int roleIndex) {
     }
 }
 
-}

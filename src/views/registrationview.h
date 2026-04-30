@@ -9,8 +9,6 @@ class QLineEdit;
 class QPushButton;
 class QTableWidget;
 
-namespace views {
-
 class RegistrationView : public QWidget {
 public:
     explicit RegistrationView(bool organizerMode, QWidget *parent = nullptr);
@@ -29,7 +27,5 @@ private:
     QPushButton *exportButton;
     QPushButton *refreshButton;
 };
-
-}  // namespace views
 
 #endif
