@@ -6,38 +6,32 @@
 #include <QDialogButtonBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
-#include <QLineEdit>
+
 #include <QVBoxLayout>
 
 BudgetItemDialog::BudgetItemDialog(const QString &itemType, QWidget *parent)
     : QDialog(parent),
       eventEdit(new QComboBox(this)),
       typeEdit(new QComboBox(this)),
-      categoryEdit(new QLineEdit(this)),
-      descriptionEdit(new QLineEdit(this)),
+      categoryEdit(new QComboBox(this)),
       amountEdit(new QDoubleSpinBox(this)),
       dateEdit(new QDateEdit(this)),
       paymentStatusEdit(new QComboBox(this)),
-      vendorEdit(new QLineEdit(this)),
       buttonBox(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this)) {
     setWindowTitle("Budget Item");
-    resize(500, 420);
+    resize(420, 320);
 
     auto *layout = new QVBoxLayout(this);
     auto *formLayout = new QFormLayout();
 
-    eventEdit->addItems({"Select Event"});
     formLayout->addRow("Event", eventEdit);
 
-    typeEdit->addItems({"Income", "Expense"});
-    typeEdit->setCurrentText(itemType);
+    typeEdit->addItems({"income", "expense"});
+    typeEdit->setCurrentText(itemType.toLower());
     formLayout->addRow("Type", typeEdit);
 
-    categoryEdit->setPlaceholderText("Category");
+    categoryEdit->addItems({"venue", "catering", "marketing", "staff", "equipment", "other"});
     formLayout->addRow("Category", categoryEdit);
-
-    descriptionEdit->setPlaceholderText("Description");
-    formLayout->addRow("Description", descriptionEdit);
 
     amountEdit->setRange(0.01, 100000000.0);
     amountEdit->setDecimals(2);
@@ -48,15 +42,41 @@ BudgetItemDialog::BudgetItemDialog(const QString &itemType, QWidget *parent)
     dateEdit->setDate(QDate::currentDate());
     formLayout->addRow("Date", dateEdit);
 
-    paymentStatusEdit->addItems({"Pending", "Paid", "Failed", "Refunded"});
+    paymentStatusEdit->addItems({"pending", "paid"});
     formLayout->addRow("Payment Status", paymentStatusEdit);
-
-    vendorEdit->setPlaceholderText("Vendor or payer");
-    formLayout->addRow("Vendor", vendorEdit);
 
     layout->addLayout(formLayout);
     layout->addWidget(buttonBox);
 
     QObject::connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
     QObject::connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
+}
+
+void BudgetItemDialog::setEvents(const QStringList &eventNames) {
+    eventEdit->clear();
+    eventEdit->addItems(eventNames);
+}
+
+int BudgetItemDialog::getEventIndex() const {
+    return eventEdit->currentIndex();
+}
+
+QString BudgetItemDialog::getType() const {
+    return typeEdit->currentText();
+}
+
+QString BudgetItemDialog::getCategory() const {
+    return categoryEdit->currentText();
+}
+
+double BudgetItemDialog::getAmount() const {
+    return amountEdit->value();
+}
+
+QString BudgetItemDialog::getDate() const {
+    return dateEdit->date().toString("dd-MM-yyyy");
+}
+
+QString BudgetItemDialog::getStatus() const {
+    return paymentStatusEdit->currentText();
 }
