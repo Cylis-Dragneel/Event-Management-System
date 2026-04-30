@@ -5,7 +5,7 @@ using namespace std;
 
 int BudgetItem::nextItemId = 1;
 
-Static string BudgetItem::toLower(string str) {
+string BudgetItem::toLower(string str) {
     for (int i = 0; i < str.length(); i++) {
         if (str[i] >= 'A' && str[i] <= 'Z') {
             str[i] += 32;

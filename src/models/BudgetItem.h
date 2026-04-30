@@ -1,6 +1,7 @@
 #ifndef BUDGETITEM_H
 #define BUDGETITEM_H
 #include <string>
+using namespace std;
 
 class BudgetItem {
 private:
@@ -34,6 +35,7 @@ public:
 
     void updateAmount(double a);
 
+    static string toLower(string str);
     static bool isValidType(string t);
     static bool isValidCategory(string c);
     static bool isValidStatus(string s);

@@ -2,6 +2,7 @@
 #define BUDGETMANAGER_H
 #include "EventBudget.h"
 #include <string>
+using namespace std;
 class BudgetManager {
 private:
     EventBudget* events;
