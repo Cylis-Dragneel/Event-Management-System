@@ -1,7 +1,23 @@
-#include "EventBudget.h"
-#include <iostream>
+﻿#include "EventBudget.h"
+#include "validation.h"
 #include <stdexcept>
-using namespace std;
+
+string toLower(string str) {
+    for (int i = 0; i < str.length(); i++) {
+        if (str[i] >= 'A' && str[i] <= 'Z') {
+            str[i] += 32;
+        }
+    }
+    return str;
+}
+
+BudgetItem* EventBudget::findItem(int itemId) {
+    for (int i = 0; i < size; i++) {
+        if (items[i].getID() == itemId)
+            return &items[i];
+    }
+    return nullptr;
+}
 
 EventBudget::EventBudget() {
     eventId = 0;
@@ -39,7 +55,7 @@ EventBudget& EventBudget::operator=(const EventBudget& other) {
     if (this == &other) {
         return *this;
     }
-    delete[] items;                 
+    delete[] items;
     eventId = other.eventId;
     eventName = other.eventName;
     size = other.size;
@@ -91,13 +107,22 @@ void EventBudget::deleteItem(int itemId) {
 }
 
 void EventBudget::editItem(int itemId, double newAmount) {
-    for (int i = 0; i < size; i++) {
-        if (items[i].getID() == itemId) {
-            items[i].updateAmount(newAmount); // validates inside
-            return;
-        }
-    }
-    throw invalid_argument("Item not found: no item with this ID");
+    BudgetItem* item = findItem(itemId);
+    if (!item) throw invalid_argument("Item not found.");
+    item->setAmount(newAmount);
+}
+
+void EventBudget::editItem(int itemId, string newCategory) {
+    BudgetItem* item = findItem(itemId);
+    if (!item) throw invalid_argument("Item not found.");
+    item->setCategory(newCategory);
+}
+
+void EventBudget::editItem(int itemId, string newType, string newStatus) {
+    BudgetItem* item = findItem(itemId);
+    if (!item) throw invalid_argument("Item not found.");
+    item->setType(newType);
+    item->setStatus(newStatus);
 }
 
 double EventBudget::getTotalIncome() const {
@@ -124,123 +149,90 @@ double EventBudget::getProfitLoss() const {
     return getTotalIncome() - getTotalExpense();
 }
 
-void EventBudget::showSummary() const {
-    cout << " Event: " << eventName << " (ID: " << eventId << ")" << endl;
-    cout << "Total Income  : Rs " << getTotalIncome() << endl;
-    cout << "Total Expense : Rs " << getTotalExpense() << endl;
-    cout << "Profit/Loss   : Rs " << getProfitLoss() << endl;
-}
-
-void EventBudget::showProfitStatus() const {
+string EventBudget::getProfitStatus() const {
     double p = getProfitLoss();
-    if (p > 0)
-        cout << "Status: Profit  (Rs " << p << ")" << endl;
-    else if (p < 0)
-        cout << "Status: Loss    (Rs " << -p << ")" << endl;
-    else
-        cout << "Status: Break-even" << endl;
+    if (p > 0)  return "Profit";
+    if (p < 0)  return "Loss";
+    return "Break-even";
 }
 
-void EventBudget::showAllItems() const {
-    if (size == 0) {
-        cout << "No items for event: " << eventName << endl;
-        return;
-    }
-    cout << "--- Budget Items [" << eventName << "]---" << endl;
+double EventBudget::getCategoryTotal(string category) const {
+    string lower = toLower(category);
+    double sum = 0;
     for (int i = 0; i < size; i++) {
-        cout << "Item ID  : " << items[i].getID() << endl;
-        cout << "Type     : " << items[i].getType() << endl;
-        cout << "Category : " << items[i].getCategory() << endl;
-        cout << "Amount   : Rs " << items[i].getAmount() << endl;
-        cout << "Date     : " << items[i].getDate() << endl;
-        cout << "Status   : " << items[i].getStatus() << endl;
+        if (items[i].getCategory() == lower)
+            sum += items[i].getAmount();
     }
+    return sum;
 }
 
-void EventBudget::showCategoryWise() const {
-    string categories[100];
-    int catCount = 0;
+double EventBudget::getHighestExpense() const {
+    bool found = false;
+    double maxVal = 0;
     for (int i = 0; i < size; i++) {
-        bool found = false;
-        for (int j = 0; j < catCount; j++) {
-            if (categories[j] == items[i].getCategory()) {
+        if (items[i].getType() == "expense") {
+            if (!found || items[i].getAmount() > maxVal) {
+                maxVal = items[i].getAmount();
                 found = true;
-                break;
             }
         }
-        if (!found) {
-            categories[catCount++] = items[i].getCategory();
-        }
     }
-    cout << "--- Category Totals [" << eventName << "] ---" << endl;
-    for (int i = 0; i < catCount; i++) {
-        double total = 0;
-        for (int j = 0; j < size; j++) {
-            if (items[j].getCategory() == categories[i]) {
-                total += items[j].getAmount();
-            }
-        }
-        cout << categories[i] << " : Rs " << total << endl;
-    }
+    return maxVal; 
 }
 
-void EventBudget::searchByCategory(string category) const {
-    bool found = false;
-    for (int i = 0; i < size; i++) {
-        if (items[i].getCategory() == category) {
-            cout << "ID: " << items[i].getID()
-                << "  Type: " << items[i].getType()
-                << "  Amount: Rs " << items[i].getAmount()
-                << "  Status: " << items[i].getStatus() << endl;
-            found = true;
-        }
+int EventBudget::searchByCategory(string category, BudgetItem* results, int maxResults) const {
+    string lower = toLower(category);
+    if (lower != "venue" && lower != "catering" && lower != "marketing" && lower != "staff"
+        && lower != "equipment" && lower != "other") {
+        throw invalid_argument("Invalid category!");
     }
-    if (!found)
-        cout << "No items found for category: " << category << endl;
+
+    int count = 0;
+    for (int i = 0; i < size && count < maxResults; i++) {
+        if (items[i].getCategory() == lower)
+            results[count++] = items[i];
+    }
+    return count;
 }
 
-void EventBudget::filterByDate(string date) const {
-    bool found = false;
-    for (int i = 0; i < size; i++) {
-        if (items[i].getDate() == date) {
-            cout << "ID: " << items[i].getID()
-                << "  Category: " << items[i].getCategory()
-                << "  Amount: Rs " << items[i].getAmount()
-                << "  Type: " << items[i].getType() << endl;
-            found = true;
-        }
+int EventBudget::filterByDate(string date, BudgetItem* results, int maxResults) const {
+    if (!Validation::isValidDate(date)) {
+        throw invalid_argument("Invalid date format! Expected DD-MM-YYYY.");
     }
-    if (!found)
-        cout << "No items found for date: " << date << endl;
+
+    int count = 0;
+    for (int i = 0; i < size && count < maxResults; i++) {
+        if (items[i].getDate() == date)
+            results[count++] = items[i];
+    }
+    return count;
 }
 
-void EventBudget::filterByStatus(string status) const {
-    bool found = false;
-    for (int i = 0; i < size; i++) {
-        if (items[i].getStatus() == status) {
-            cout << "ID: " << items[i].getID()
-                << "  Category: " << items[i].getCategory()
-                << "  Amount: Rs " << items[i].getAmount() << endl;
-            found = true;
-        }
+int EventBudget::filterByStatus(string status, BudgetItem* results, int maxResults) const {
+    string lower = toLower(status);
+    if (lower != "pending" && lower != "paid") {
+        throw invalid_argument("Status must be 'pending' or 'paid'.");
     }
-    if (!found)
-        cout << "No items with status: " << status << endl;
+
+    int count = 0;
+    for (int i = 0; i < size && count < maxResults; i++) {
+        if (items[i].getStatus() == lower)
+            results[count++] = items[i];
+    }
+    return count;
 }
 
-void EventBudget::filterByType(string type) const {
-    bool found = false;
-    for (int i = 0; i < size; i++) {
-        if (items[i].getType() == type) {
-            cout << "ID: " << items[i].getID()
-                << "  Category: " << items[i].getCategory()
-                << "  Amount: Rs " << items[i].getAmount()
-                << "  Status: " << items[i].getStatus() << endl;
-            found = true;
-        }
+int EventBudget::filterByType(string type, BudgetItem* results, int maxResults) const {
+    string lower = toLower(type);
+    if (lower != "income" && lower != "expense")
+        throw invalid_argument("Type must be 'income' or 'expense'.");
+
+    int count = 0;
+    for (int i = 0; i < size && count < maxResults; i++) {
+        if (items[i].getType() == lower)
+            results[count++] = items[i];
     }
-    if (!found)
-        cout << "No items of type: " << type << endl;
+    return count;
 }
 
 void EventBudget::sortByAmount() {
@@ -253,20 +245,6 @@ void EventBudget::sortByAmount() {
             }
         }
     }
-}
-
-void EventBudget::showHighestExpense() const {
-    double maxVal = -1;
-    for (int i = 0; i < size; i++) {
-        if (items[i].getType() == "expense" &&
-            items[i].getAmount() > maxVal) {
-            maxVal = items[i].getAmount();
-        }
-    }
-    if (maxVal == -1)
-        cout << "No expense items found."<<endl;
-    else
-        cout << "Highest Expense: Rs " << maxVal << endl;
 }
 
 double EventBudget::getAverageExpense() const {
@@ -282,21 +260,19 @@ double EventBudget::getAverageExpense() const {
     return total / count;
 }
 
-int EventBudget::getEventId()const { 
+int EventBudget::getEventId()const {
     return eventId;
 }
 string EventBudget::getEventName()const {
-    return eventName; 
+    return eventName;
 }
 int EventBudget::getSize()const {
-    return size; 
+    return size;
 }
 bool EventBudget::isEmpty()const {
     return size == 0;
 }
-BudgetItem* EventBudget::getItems()const { 
-    return items;
-}
+
 BudgetItem EventBudget::getItem(int index) const {
     if (index < 0 || index >= size)
         throw out_of_range("Invalid index");
