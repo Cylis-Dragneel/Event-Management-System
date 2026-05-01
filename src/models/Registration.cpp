@@ -1,6 +1,5 @@
 #include "Registration.h"
 #include "validation.h"
-#include <iostream>
 #include <stdexcept>
 using namespace std;
 
