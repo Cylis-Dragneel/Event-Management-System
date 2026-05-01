@@ -28,8 +28,8 @@ double totalAmount, string notes) {
     setRegistrationStatus(registrationStatus);
     setPaymentStatus(paymentStatus);
     setRegistrationDate(registrationDate);
-    setAmountPaid(amountPaid);
     setTotalAmount(totalAmount);
+    setAmountPaid(amountPaid);
     setNotes(notes);
     
     waitlistCapacity = 10;
