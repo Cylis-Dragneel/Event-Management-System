@@ -21,6 +21,7 @@ private:
     void appendVenue(const Venue &venue);
     void seedVenues();
     void rebuildTable();
+    void deleteVenue(int index);
 
     bool isOrganizerMode;
     QLineEdit *searchEdit;

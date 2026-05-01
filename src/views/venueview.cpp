@@ -72,24 +72,64 @@ VenueView::VenueView(bool organizerMode, QWidget *parent)
 
     QObject::connect(addButton, &QPushButton::clicked, this, [this]() {
         VenueDialog dialog(this);
-        dialog.exec();
+        if (dialog.exec() != QDialog::Accepted) return;
+        if (dialog.getName().isEmpty()) {
+            QMessageBox::warning(this, "Add Venue", "Venue name cannot be empty.");
+            return;
+        }
+        try {
+            Venue newVenue(dialog.getName().toStdString(),
+                           dialog.getAddress().toStdString(),
+                           dialog.getCapacity(),
+                           dialog.getContactNumber().toStdString(),
+                           dialog.getContactEmail().toStdString(),
+                           dialog.getHasWifi(),
+                           dialog.getHasParking(),
+                           dialog.getHasCatering(),
+                           dialog.getHasAVEquipment());
+            appendVenue(newVenue);
+            rebuildTable();
+        } catch (const std::invalid_argument &e) {
+            QMessageBox::warning(this, "Add Venue", QString::fromStdString(e.what()));
+        }
     });
 
     QObject::connect(editButton, &QPushButton::clicked, this, [this]() {
-        if (venuesTable->currentRow() < 0) {
+        int row = venuesTable->currentRow();
+        if (row < 0) {
             QMessageBox::information(this, "Edit Venue", "Select a venue row first.");
             return;
         }
+        int idx = venuesTable->item(row, 0)->data(Qt::UserRole).toInt();
         VenueDialog dialog(this);
-        dialog.exec();
+        dialog.populate(*(venues + idx));
+        if (dialog.exec() != QDialog::Accepted) return;
+        try {
+            Venue &v = *(venues + idx);
+            v.setName(dialog.getName().toStdString());
+            v.setAddress(dialog.getAddress().toStdString());
+            v.setCapacity(dialog.getCapacity());
+            v.setContactNumber(dialog.getContactNumber().toStdString());
+            v.setContactEmail(dialog.getContactEmail().toStdString());
+            v.setHasWifi(dialog.getHasWifi());
+            v.setHasParking(dialog.getHasParking());
+            v.setHasCatering(dialog.getHasCatering());
+            v.setHasAVEquipment(dialog.getHasAVEquipment());
+            rebuildTable();
+        } catch (const std::invalid_argument &e) {
+            QMessageBox::warning(this, "Edit Venue", QString::fromStdString(e.what()));
+        }
     });
 
     QObject::connect(deleteButton, &QPushButton::clicked, this, [this]() {
-        if (venuesTable->currentRow() < 0) {
+        int row = venuesTable->currentRow();
+        if (row < 0) {
             QMessageBox::information(this, "Delete Venue", "Select a venue row first.");
             return;
         }
-        QMessageBox::information(this, "Delete Venue", "Delete flow will be connected to controller logic.");
+        int idx = venuesTable->item(row, 0)->data(Qt::UserRole).toInt();
+        deleteVenue(idx);
+        rebuildTable();
     });
 }
 
@@ -136,6 +176,13 @@ void VenueView::seedVenues() {
     appendVenue(Venue("Grand Expo", "Industrial Zone, Sector 9", 900, "0312-7654321", "expo@events.com", true, true, true, true));
 }
 
+void VenueView::deleteVenue(int index) {
+    for (int i = index; i < venueCount - 1; i++) {
+        *(venues + i) = *(venues + i + 1);
+    }
+    --venueCount;
+}
+
 void VenueView::rebuildTable() {
     venuesTable->setRowCount(0);
 
@@ -145,7 +192,10 @@ void VenueView::rebuildTable() {
         const int row = venuesTable->rowCount();
         venuesTable->insertRow(row);
 
-        venuesTable->setItem(row, 0, new QTableWidgetItem(QString::fromStdString(current->getName())));
+        const int arrayIndex = venueCount - remaining;
+        QTableWidgetItem *nameCell = new QTableWidgetItem(QString::fromStdString(current->getName()));
+        nameCell->setData(Qt::UserRole, arrayIndex);
+        venuesTable->setItem(row, 0, nameCell);
         venuesTable->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(current->getAddress())));
         venuesTable->setItem(row, 2, new QTableWidgetItem(QString::number(current->getCapacity())));
         venuesTable->setItem(row, 3, new QTableWidgetItem(QString::fromStdString(current->getAmenitiesList())));
