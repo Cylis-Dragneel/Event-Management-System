@@ -21,6 +21,7 @@ private:
     void appendEvent(const Event &event);
     void seedEvents();
     void rebuildTable();
+    void deleteEvent(int index);
 
     bool isOrganizerMode;
     QLineEdit *searchEdit;

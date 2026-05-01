@@ -82,24 +82,65 @@ EventView::EventView(bool organizerMode, QWidget *parent)
 
     QObject::connect(addButton, &QPushButton::clicked, this, [this]() {
         EventDialog dialog(this);
-        dialog.exec();
+        if (dialog.exec() != QDialog::Accepted) return;
+        if (dialog.getName().isEmpty()) {
+            QMessageBox::warning(this, "Add Event", "Event name cannot be empty.");
+            return;
+        }
+        try {
+            Event newEvent(dialog.getName().toStdString(),
+                           dialog.getDescription().toStdString(),
+                           dialog.getDate().toStdString(),
+                           dialog.getTime().toStdString(),
+                           dialog.getDuration(),
+                           dialog.getCapacity(),
+                           dialog.getType());
+            if (dialog.getVenueId() > 0)
+                newEvent.setVenueId(dialog.getVenueId());
+            appendEvent(newEvent);
+            rebuildTable();
+        } catch (const std::invalid_argument &e) {
+            QMessageBox::warning(this, "Add Event", QString::fromStdString(e.what()));
+        }
     });
 
     QObject::connect(editButton, &QPushButton::clicked, this, [this]() {
-        if (eventsTable->currentRow() < 0) {
+        int row = eventsTable->currentRow();
+        if (row < 0) {
             QMessageBox::information(this, "Edit Event", "Select an event row first.");
             return;
         }
+        int idx = eventsTable->item(row, 0)->data(Qt::UserRole).toInt();
         EventDialog dialog(this);
-        dialog.exec();
+        dialog.populate(*(events + idx));
+        if (dialog.exec() != QDialog::Accepted) return;
+        try {
+            Event &e = *(events + idx);
+            e.setName(dialog.getName().toStdString());
+            e.setDescription(dialog.getDescription().toStdString());
+            e.setDate(dialog.getDate().toStdString());
+            e.setTime(dialog.getTime().toStdString());
+            e.setDuration(dialog.getDuration());
+            e.setCapacity(dialog.getCapacity());
+            e.setType(dialog.getType());
+            if (dialog.getVenueId() > 0)
+                e.setVenueId(dialog.getVenueId());
+            e.changeStatus(dialog.getStatus());
+            rebuildTable();
+        } catch (const std::invalid_argument &e2) {
+            QMessageBox::warning(this, "Edit Event", QString::fromStdString(e2.what()));
+        }
     });
 
     QObject::connect(deleteButton, &QPushButton::clicked, this, [this]() {
-        if (eventsTable->currentRow() < 0) {
+        int row = eventsTable->currentRow();
+        if (row < 0) {
             QMessageBox::information(this, "Delete Event", "Select an event row first.");
             return;
         }
-        QMessageBox::information(this, "Delete Event", "Delete flow will be connected to controller logic.");
+        int idx = eventsTable->item(row, 0)->data(Qt::UserRole).toInt();
+        deleteEvent(idx);
+        rebuildTable();
     });
 }
 
@@ -157,6 +198,13 @@ void EventView::seedEvents() {
     third->changeStatus(1);
 }
 
+void EventView::deleteEvent(int index) {
+    for (int i = index; i < eventCount - 1; i++) {
+        *(events + i) = *(events + i + 1);
+    }
+    --eventCount;
+}
+
 void EventView::rebuildTable() {
     eventsTable->setRowCount(0);
 
@@ -170,7 +218,10 @@ void EventView::rebuildTable() {
         const QString capacityText = QString::number(current->getCapacity());
         const QString venueText = current->hasVenue() ? QString::number(current->getVenueId()) : QString("Unassigned");
 
-        eventsTable->setItem(row, 0, new QTableWidgetItem(QString::fromStdString(current->getName())));
+        const int arrayIndex = eventCount - remaining;
+        QTableWidgetItem *nameCell = new QTableWidgetItem(QString::fromStdString(current->getName()));
+        nameCell->setData(Qt::UserRole, arrayIndex);
+        eventsTable->setItem(row, 0, nameCell);
         eventsTable->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(current->getDate() + " " + current->getTime())));
         eventsTable->setItem(row, 2, new QTableWidgetItem(durationText));
         eventsTable->setItem(row, 3, new QTableWidgetItem(QString::fromStdString(current->getTypeText())));
