@@ -49,6 +49,9 @@ set(SOURCES
   src/models/budgetitem.cpp
   src/models/EventBudget.cpp
   src/models/BudgetManager.cpp
+  src/models/Attendee.cpp
+  src/models/Registration.cpp
+  src/models/CSVExporter.cpp
 )
 
 set(RESOURCES
