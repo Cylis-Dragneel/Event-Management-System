@@ -1,0 +1,386 @@
+════════════════════════════════════════════════════════════════════
+   EVENT MANAGER — DATABASE LAYER REFERENCE GUIDE
+   Author  : Member 5
+   Version : Final
+════════════════════════════════════════════════════════════════════
+
+HOW TO USE THIS GUIDE
+─────────────────────
+Include the relevant header in your .cpp file.
+The database handle (db) is shared automatically.
+Never touch db directly — just call the functions.
+
+REQUIRED SETUP (Member 1 only)
+───────────────────────────────
+These 3 calls must happen at app start in main.cpp:
+
+    openDatabase()    — opens/creates the .db file
+    createTables()    — creates all tables if not exist
+    seedData()        — inserts sample data if db is empty
+
+And this must happen at app exit:
+
+    closeDatabase()   — safely closes the database
+
+════════════════════════════════════════════════════════════════════
+ INCLUDE GUIDE — add to top of your .cpp file
+════════════════════════════════════════════════════════════════════
+
+#include "database.h"      — ALWAYS include this first
+#include "user.h"          — login and user management
+#include "event.h"         — event CRUD + search/filter
+#include "venue.h"         — venue CRUD
+#include "registration.h"  — registration + waitlist + CSV
+#include "budget.h"        — budget items + financial summary
+#include "validation.h"    — shared input validation helpers
+
+════════════════════════════════════════════════════════════════════
+ ROLE CHECK HELPERS  →  database.h
+ (Use these everywhere to enforce permissions)
+════════════════════════════════════════════════════════════════════
+
+isOrganizer(user_id)
+    Returns true if user is an organizer
+    Use before allowing event/venue/budget actions
+
+isUser(user_id)
+    Returns true if user is a normal attendee
+
+getUserRole(user_id)
+    Returns "organizer", "user", or "" if not found
+
+EXAMPLE:
+    if (!isOrganizer(logged_in_user_id)) {
+        cout << "Access denied." << endl;
+        return;
+    }
+
+════════════════════════════════════════════════════════════════════
+ USER FUNCTIONS  →  user.h
+════════════════════════════════════════════════════════════════════
+
+insertUser(username, password, email, role)
+    Adds a new user to the database
+    role must be "user" or "organizer"
+    Returns true if successful
+    Returns false if username/email already exists
+
+loginUser(username, password, out_user_id, out_role)
+    Validates login credentials
+    Fills out_user_id and out_role on success
+    Returns true if login is valid
+    EXAMPLE:
+        int uid = -1;
+        string role = "";
+        if (loginUser("alice", "pass123", uid, role)) {
+            // uid and role are now filled
+        }
+
+fetchUser(user_id)
+    Prints details of one user to console
+
+userExists(user_id)
+    Returns true if user with that ID exists
+    Use before inserting test/seed users
+
+════════════════════════════════════════════════════════════════════
+ EVENT FUNCTIONS  →  event.h
+════════════════════════════════════════════════════════════════════
+
+insertEvent(organizer_id, venue_id, title,
+            description, date, capacity)
+    Creates a new event with status "Draft"
+    Only organizers can create events
+    date format must be "YYYY-MM-DD"
+    capacity must be greater than 0
+    Returns true if successful
+
+fetchEvent(event_id)
+    Prints full details of one event
+
+fetchAllEvents()
+    Prints all events in the database
+
+updateEventStatus(event_id, newStatus)
+    Changes event status
+    Only these transitions are allowed:
+        Draft      -> Published
+        Published  -> Completed
+        Published  -> Cancelled
+    Returns true if successful
+
+deleteEvent(event_id)
+    Deletes event only if status is "Draft"
+    Returns true if successful
+
+── SEARCH AND FILTER ──────────────────────────────────────────────
+
+searchEventsByStatus("Published")
+    Returns all events with that status
+    Valid values: Draft, Published, Completed, Cancelled
+
+searchEventsByDate("2025-10-01")
+    Returns all events on or after the given date
+    Date must be in YYYY-MM-DD format
+
+searchEventsByTitle("tech")
+    Partial match, case-insensitive
+    Returns all events whose title contains the keyword
+
+searchEventsByOrganizer(organizer_id)
+    Returns all events created by that organizer
+    Fails if user is not an organizer
+
+filterEventsByCapacity(minCapacity, maxCapacity)
+    Returns events whose capacity falls in that range
+    Example: filterEventsByCapacity(50, 200)
+
+════════════════════════════════════════════════════════════════════
+ VENUE FUNCTIONS  →  venue.h
+════════════════════════════════════════════════════════════════════
+
+insertVenue(name, location, capacity)
+    Adds a new venue
+    name cannot be empty
+    capacity must be greater than 0
+    Returns true if successful
+
+fetchVenue(venue_id)
+    Prints details of one venue
+
+fetchAllVenues()
+    Prints all venues
+
+updateVenue(venue_id, name, location, capacity)
+    Updates venue details
+    Returns true if successful
+
+deleteVenue(venue_id)
+    Deletes venue only if no events are linked to it
+    Returns true if successful
+
+════════════════════════════════════════════════════════════════════
+ REGISTRATION FUNCTIONS  →  registration.h
+════════════════════════════════════════════════════════════════════
+
+registerAttendee(event_id, user_id)
+    Registers a user for an event
+    Automatically assigns:
+        "Confirmed"  — if seats are available
+        "Waitlisted" — if event is at capacity
+    Blocks duplicate registrations
+    Returns true if successful
+
+cancelRegistration(event_id, user_id)
+    Cancels an active registration
+    Automatically promotes first waitlisted
+    user to Confirmed if a spot opens
+    Returns true if successful
+
+updatePaymentStatus(reg_id, status)
+    Updates payment status of a registration
+    status must be: "Pending", "Paid", or "Refunded"
+    Returns true if successful
+
+fetchRegistration(event_id)
+    Prints all registrations for an event
+    Shows username, status, payment status
+
+exportAttendeesCSV(event_id, filename)
+    Exports attendee list to a .csv file
+    EXAMPLE: exportAttendeesCSV(1, "gala_attendees.csv")
+
+── COUNT HELPERS ───────────────────────────────────────────────────
+
+getConfirmedCount(event_id)
+    Returns number of confirmed registrations
+    Also prints the count to console
+
+getWaitlistCount(event_id)
+    Returns number of waitlisted registrations
+    Also prints the count to console
+
+isEventFull(event_id)
+    Returns true if confirmed >= capacity
+    Also prints result to console
+
+════════════════════════════════════════════════════════════════════
+ BUDGET FUNCTIONS  →  budget.h
+════════════════════════════════════════════════════════════════════
+
+insertBudgetItem(event_id, category, type,
+                 amount, date, description)
+    Adds a budget item to an event
+    type must be "income" or "expense"
+    amount must be >= 0
+    date must be in YYYY-MM-DD format
+    Returns true if successful
+    CATEGORIES (suggested): Venue Rental, Catering,
+    Marketing, Staff, Equipment, Ticket Sales,
+    Sponsorship, Decorations, Artwork Sales, Booth Fees
+
+fetchBudgetItems(event_id)
+    Prints all budget items for an event
+    Grouped by type (expenses first, then income)
+
+updateBudgetItem(item_id, category, type,
+                 amount, date, description)
+    Updates an existing budget item
+    Returns true if successful
+
+deleteBudgetItem(item_id)
+    Deletes a budget item
+    Returns true if successful
+
+fetchFinancialSummary(event_id)
+    Prints:
+        Total Income
+        Total Expenses
+        PROFIT or LOSS amount
+
+── CATEGORY HELPERS ────────────────────────────────────────────────
+
+fetchIncomeItems(event_id)
+    Prints only income items for an event
+
+fetchExpenseItems(event_id)
+    Prints only expense items for an event
+
+fetchBudgetByCategory(event_id, category)
+    Prints items matching that category
+    Case-insensitive match
+    EXAMPLE: fetchBudgetByCategory(1, "Catering")
+
+════════════════════════════════════════════════════════════════════
+ VALIDATION HELPERS  →  validation.h
+ (All members should use these before inserting data)
+════════════════════════════════════════════════════════════════════
+
+── COMBINED VALIDATORS (easiest to use) ────────────────────────────
+
+validateUserFields(username, password, email, role)
+    Checks all user fields at once
+    Returns true only if ALL fields are valid
+
+validateEventFields(title, date, capacity)
+    Checks all event fields at once
+    Returns true only if ALL fields are valid
+
+validateVenueFields(name, capacity)
+    Checks all venue fields at once
+    Returns true only if ALL fields are valid
+
+validateBudgetFields(category, type, amount, date)
+    Checks all budget fields at once
+    Returns true only if ALL fields are valid
+
+── INDIVIDUAL VALIDATORS ───────────────────────────────────────────
+
+isNonEmpty(value, fieldName)
+    Fails if string is empty
+
+isValidLength(value, fieldName, minLen, maxLen)
+    Fails if string is outside length range
+
+isValidEmail(email)
+    Fails if email format is wrong
+    Valid format: something@something.com
+
+isValidDate(date)
+    Fails if date format is wrong or date is impossible
+    Valid format: YYYY-MM-DD
+
+isPositiveAmount(amount)
+    Fails if amount is 0 or negative
+
+isNonNegativeAmount(amount)
+    Fails if amount is negative (0 is allowed)
+
+isPositiveCapacity(capacity)
+    Fails if capacity is 0 or negative
+
+isValidRole(role)
+    Fails if role is not "user" or "organizer"
+
+isValidEventStatus(status)
+    Fails if not Draft/Published/Completed/Cancelled
+
+isValidPaymentStatus(status)
+    Fails if not Pending/Paid/Refunded
+
+isValidBudgetType(type)
+    Fails if not "income" or "expense"
+
+isValidRegStatus(status)
+    Fails if not Confirmed/Waitlisted/Cancelled
+
+════════════════════════════════════════════════════════════════════
+ IMPORTANT RULES FOR ALL MEMBERS
+════════════════════════════════════════════════════════════════════
+
+1. Never create or modify database tables yourself
+2. Never use the db variable directly in your code
+3. Always use validation helpers before inserting data
+4. Date format is always "YYYY-MM-DD" everywhere
+5. All insert/update functions return bool
+   — check the return value if the result matters
+6. Do NOT call clearAllData() in final code
+   — it is for testing only
+7. Role checking is your responsibility in your logic:
+   — use isOrganizer() before organizer-only actions
+   — use isUser() before user-only actions
+
+════════════════════════════════════════════════════════════════════
+ DATABASE TABLES OVERVIEW
+════════════════════════════════════════════════════════════════════
+
+Users
+    user_id | username | password | email | role
+
+Venues
+    venue_id | name | location | capacity
+
+Events
+    event_id | organizer_id | venue_id | title |
+    description | event_date | status | capacity
+
+Registrations
+    reg_id | event_id | user_id |
+    status | payment_status
+
+BudgetItems
+    item_id | event_id | category |
+    type | amount | item_date | description
+
+════════════════════════════════════════════════════════════════════
+ SEED DATA SUMMARY (available for testing)
+════════════════════════════════════════════════════════════════════
+
+USERS
+    ID 1 — alice    (organizer)
+    ID 2 — bob      (organizer)
+    ID 3 — carol    (organizer)
+    ID 4 — david    (user)
+    ID 5 — emma     (user)
+    ID 6 — frank    (user)
+    ID 7 — grace    (user)
+    ID 8 — henry    (user)
+    ID 9 — isla     (user)
+
+VENUES
+    ID 1 — City Hall        (capacity 300)
+    ID 2 — Tech Hub         (capacity 100)
+    ID 3 — Grand Arena      (capacity 500)
+    ID 4 — Community Center (capacity 80)
+    ID 5 — Rooftop Lounge   (capacity 40)
+
+EVENTS
+    ID 1 — Annual Gala         (Published,  cap 400)
+    ID 2 — Tech Workshop       (Draft,      cap 80)
+    ID 3 — New Year Celebration(Published,  cap 250)
+    ID 4 — Art Exhibition      (Completed,  cap 70)
+    ID 5 — Startup Pitch Night (Published,  cap 35)
+    ID 6 — Career Fair         (Published,  cap 200)
+    ID 7 — Photography Bootcamp(Cancelled,  cap 60)
+
+════════════════════════════════════════════════════════════════════
