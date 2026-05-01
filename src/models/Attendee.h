@@ -3,7 +3,6 @@
 
 #include <string>
 #include <stdexcept>
-#include "validation.h"
 
 using namespace std;
 
@@ -15,10 +14,12 @@ private:
     string email;
     string phone;
     string address;
-
+    
+    static int nextId;
 public:
    
     Attendee();
+    Attendee(string firstName, string lastName, string email, string phone = "", string address = "");
     Attendee(int attendeeId, string firstName, string lastName, string email, string phone, string address);
     
     ~Attendee();

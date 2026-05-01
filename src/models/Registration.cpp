@@ -1,4 +1,5 @@
 #include "Registration.h"
+#include "validation.h"
 #include <iostream>
 #include <stdexcept>
 using namespace std;
@@ -36,7 +37,48 @@ double totalAmount, string notes) {
     waitlistSize = 0;
     waitlistQueue = new int[waitlistCapacity];
 }
+Registration::Registration(const Registration& other) {
+    registrationId = other.registrationId;
+    eventId = other.eventId;
+    attendeeId = other.attendeeId;
+    registrationStatus = other.registrationStatus;
+    paymentStatus = other.paymentStatus;
+    registrationDate = other.registrationDate;
+    amountPaid = other.amountPaid;
+    totalAmount = other.totalAmount;
+    notes = other.notes;
+    
+    waitlistCapacity = other.waitlistCapacity;
+    waitlistSize = other.waitlistSize;
+    waitlistQueue = new int[waitlistCapacity];
+    for(int i = 0; i < waitlistSize; i++) {
+        waitlistQueue[i] = other.waitlistQueue[i];
+    }
+}
 
+Registration& Registration::operator=(const Registration& other) {
+    if(this != &other) {
+        delete[] waitlistQueue;
+        
+        registrationId = other.registrationId;
+        eventId = other.eventId;
+        attendeeId = other.attendeeId;
+        registrationStatus = other.registrationStatus;
+        paymentStatus = other.paymentStatus;
+        registrationDate = other.registrationDate;
+        amountPaid = other.amountPaid;
+        totalAmount = other.totalAmount;
+        notes = other.notes;
+        
+        waitlistCapacity = other.waitlistCapacity;
+        waitlistSize = other.waitlistSize;
+        waitlistQueue = new int[waitlistCapacity];
+        for(int i = 0; i < waitlistSize; i++) {
+            waitlistQueue[i] = other.waitlistQueue[i];
+        }
+    }
+    return *this;
+}
 Registration::~Registration() {
     delete[] waitlistQueue;
 }
@@ -130,20 +172,20 @@ void Registration::promoteNextFromWaitlist() {
     waitlistSize--;
 }
 
-void Registration::printWaitlist() const {
+string Registration::getWaitlistString() const {
+    string result = "";
     if(waitlistSize == 0) {
-        cout << "Waitlist is empty" << endl;
-        return;
+        return "Waitlist is empty";
     }
-    
-    cout << "Waitlist (" << waitlistSize << "): ";
+    result = "Waitlist (" + to_string(waitlistSize) + "): ";
     for(int i = 0; i < waitlistSize; i++) {
-        cout << waitlistQueue[i];
-        if(i < waitlistSize - 1) cout << " -> ";
+        result += to_string(waitlistQueue[i]);
+        if(i < waitlistSize - 1) {
+            result += " -> ";
+        }
     }
-    cout << endl;
+    return result;
 }
-
 
 int Registration::getRegistrationId() const { 
     return registrationId;

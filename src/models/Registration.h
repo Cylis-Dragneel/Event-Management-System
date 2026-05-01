@@ -2,8 +2,6 @@
 #define REGISTRATION_H
 
 #include <string>
-#include "Validation.h"
-
 using namespace std;
 
 class Registration {
@@ -29,11 +27,11 @@ public:
     Registration(int registrationId, int eventId, int attendeeId, int registrationStatus, 
                  int paymentStatus, string registrationDate, double amountPaid, 
                  double totalAmount, string notes);
-    
+    Registration(const Registration& other);
+    Registration& operator=(const Registration& other);
     // Destructor
     ~Registration();
     
-    // Getters with const
     int getRegistrationId() const;
     int getEventId() const;
     int getAttendeeId() const;
@@ -81,7 +79,7 @@ public:
     void removeFromWaitlist(int attendeeId);
     int getNextFromWaitlist() const;
     void promoteNextFromWaitlist();
-    void printWaitlist() const;
+   string getWaitlistString() const;
 
 private:
     void resizeWaitlist();

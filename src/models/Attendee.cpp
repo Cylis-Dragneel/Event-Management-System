@@ -1,5 +1,7 @@
-#include "Attendee.h"
+#include"attendee.h"
+#include "validation.h"
 #include <iostream>
+#include <stdexcept>
 using namespace std;
 
 Attendee::Attendee() {
@@ -10,7 +12,14 @@ Attendee::Attendee() {
     phone = "";
     address = "";
 }
-
+Attendee::Attendee(string firstName, string lastName, string email, string phone, string address) {
+    this->attendeeId = nextId++;
+    this->firstName = firstName;
+    this->lastName = lastName;
+    this->email = email;
+    this->phone = phone;
+    this->address = address;
+}
 
 Attendee::Attendee(int attendeeId, string firstName, string lastName, string email, string phone, string address) {
     
@@ -20,6 +29,10 @@ Attendee::Attendee(int attendeeId, string firstName, string lastName, string ema
     setEmail(email);
     setPhone(phone);
     setAddress(address);
+
+    if(attendeeId >= nextId) {
+        nextId = attendeeId + 1;
+    }
 }
 
 Attendee::~Attendee() {}
