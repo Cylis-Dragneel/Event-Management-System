@@ -39,9 +39,3 @@
 
 # debug information files
 *.dwo
-/.vs
-/Event Ma.910489E8/x64/Debug
-/Event Management System.sln
-/Event Management System.vcxproj
-/Event Management System.vcxproj.filters
-/Event Management System.vcxproj.user

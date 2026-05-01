@@ -1,4 +1,0 @@
-Username,Email,Status,PaymentStatus
-user3,u3@email.com,Cancelled,Paid
-user4,u4@email.com,Confirmed,Refunded
-user5,u5@email.com,Confirmed,Pending
