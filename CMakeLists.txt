@@ -8,9 +8,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core Sql)
 # Compiler ko batana ke baki files kis folder mein hain
 include_directories(src/models)
 
-# Ahista ahista sirf un files ko compile karna jinhe hum test kar rahe hain
 set(SOURCES 
-    main.cpp 
     src/models/database.cpp 
     src/models/Attendee.cpp 
     src/models/validation.cpp
@@ -19,13 +17,14 @@ set(SOURCES
     src/models/Registration.cpp
     src/models/budgetitem.cpp
 )
+
 set(HEADERS 
     src/models/database.h 
     src/models/Attendee.h 
     src/models/validation.h
     src/models/venue.h
     src/models/event.h
-     src/models/Registration.h
+    src/models/Registration.h
     src/models/BudgetItem.h
 )
 
