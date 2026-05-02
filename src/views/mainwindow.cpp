@@ -5,9 +5,12 @@
 #include "registrationview.h"
 #include "venueview.h"
 
+#include <QApplication>
 #include <QComboBox>
+#include <QFile>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QPushButton>
 #include <QStackedWidget>
 #include <QTabWidget>
 #include <QVBoxLayout>
@@ -19,7 +22,9 @@ MainWindow::MainWindow(Database *db, QWidget *parent)
       central(nullptr),
       titleLabel(nullptr),
       roleSelector(nullptr),
+      themeButton(nullptr),
       roleStack(nullptr),
+      isDarkMode(false),
       organizerEventView(nullptr),
       organizerVenueView(nullptr),
       organizerRegistrationView(nullptr),
@@ -42,8 +47,16 @@ void MainWindow::buildUi() {
     titleLabel->setObjectName("titleLabel");
     roleSelector = new QComboBox(central);
     roleSelector->addItems({"Organizer", "Attendee"});
+
+    themeButton = new QPushButton(central);
+    themeButton->setObjectName("themeToggle");
+    themeButton->setText("Dark Mode");
+    themeButton->setFixedWidth(100);
+    themeButton->setToolTip("Toggle Dark/Light Mode");
+
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
+    headerLayout->addWidget(themeButton);
     headerLayout->addWidget(new QLabel("View", central));
     headerLayout->addWidget(roleSelector);
     mainLayout->addLayout(headerLayout);
@@ -75,6 +88,10 @@ void MainWindow::buildUi() {
     QObject::connect(roleSelector, &QComboBox::currentIndexChanged, this, [this](int index) {
         applyRole(index);
     });
+
+    QObject::connect(themeButton, &QPushButton::clicked, this, [this]() {
+        toggleTheme();
+    });
 }
 
 void MainWindow::applyRole(int roleIndex) {
@@ -84,5 +101,28 @@ void MainWindow::applyRole(int roleIndex) {
     } else {
         titleLabel->setText("Event Discovery");
     }
+}
+
+void MainWindow::toggleTheme() {
+    isDarkMode = !isDarkMode;
+
+    QString stylesheet;
+    if (isDarkMode) {
+        QFile file(":/styles/dark.qss");
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream stream(&file);
+            stylesheet = stream.readAll();
+        }
+        themeButton->setText("Light Mode");
+    } else {
+        QFile file(":/styles/material.qss");
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QTextStream stream(&file);
+            stylesheet = stream.readAll();
+        }
+        themeButton->setText("Dark Mode");
+    }
+
+    qApp->setStyleSheet(stylesheet);
 }
 

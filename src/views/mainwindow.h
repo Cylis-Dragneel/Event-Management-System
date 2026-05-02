@@ -7,6 +7,7 @@ class QLabel;
 class QComboBox;
 class QStackedWidget;
 class QWidget;
+class QPushButton;
 
 class Database;
 class EventView;
@@ -21,12 +22,15 @@ public:
 private:
     void buildUi();
     void applyRole(int roleIndex);
+    void toggleTheme();
 
     Database *database;
     QWidget *central;
     QLabel *titleLabel;
     QComboBox *roleSelector;
+    QPushButton *themeButton;
     QStackedWidget *roleStack;
+    bool isDarkMode;
 
     EventView *organizerEventView;
     VenueView *organizerVenueView;
