@@ -44,6 +44,13 @@ public:
     bool addBudgetItem(const BudgetItem& item);
     BudgetItem getBudgetItem(int id);
 
+    // ================= GET ALL OPERATIONS =================
+    Attendee* getAllAttendees(int& count);
+    Venue* getAllVenues(int& count);
+    Event* getAllEvents(int& count);
+    Registration* getAllRegistrations(int& count);
+    BudgetItem* getAllBudgetItems(int& count);
+
     // ================= UPDATE & DELETE OPERATIONS =================
     bool updateAttendee(const Attendee& attendee);
     bool deleteAttendee(int id);

@@ -202,7 +202,13 @@ Event Database::getEvent(int id) {
     QSqlQuery query;
     query.prepare("SELECT * FROM Events WHERE EventID = :id");
     query.bindValue(":id", id);
-    if (query.exec() && query.next()) {
+    
+    if (!query.exec()) {
+        qDebug() << "Error getting event:" << query.lastError().text();
+        return Event();
+    }
+    
+    if (query.next()) {
         string name = query.value("Name").toString().toStdString();
         string description = query.value("Description").toString().toStdString();
         string date = query.value("Date").toString().toStdString();
@@ -210,9 +216,11 @@ Event Database::getEvent(int id) {
         int duration = query.value("Duration").toInt();
         int capacity = query.value("Capacity").toInt();
         int type = query.value("Type").toInt();
+        int status = query.value("Status").toInt();
 
         Event e(name, description, date, time, duration, capacity, type);
         e.setVenueId(query.value("VenueID").toInt());
+        e.changeStatus(status);
         return e;
     }
     return Event();
@@ -389,9 +397,122 @@ bool Database::updateBudgetItem(int id, const BudgetItem& item) {
     query.bindValue(":id", id);
     return query.exec();
 }
+}
 bool Database::deleteBudgetItem(int id) {
     QSqlQuery query;
     query.prepare("DELETE FROM BudgetItems WHERE ItemID=:id");
     query.bindValue(":id", id);
     return query.exec();
+}
+
+// ================= GET ALL OPERATIONS =================
+Attendee* Database::getAllAttendees(int& count) {
+    QSqlQuery countQuery("SELECT COUNT(*) FROM Attendees");
+    count = countQuery.next() ? countQuery.value(0).toInt() : 0;
+    if (count == 0) return nullptr;
+
+    Attendee* list = new Attendee[count];
+    QSqlQuery query("SELECT * FROM Attendees");
+    int i = 0;
+    while (query.next() && i < count) {
+        int id = query.value("AttendeeID").toInt();
+        string fName = query.value("FirstName").toString().toStdString();
+        string lName = query.value("LastName").toString().toStdString();
+        string email = query.value("Email").toString().toStdString();
+        string phone = query.value("Phone").toString().toStdString();
+        string address = query.value("Address").toString().toStdString();
+        list[i++] = Attendee(id, fName, lName, email, phone, address);
+    }
+    return list;
+}
+
+Venue* Database::getAllVenues(int& count) {
+    QSqlQuery countQuery("SELECT COUNT(*) FROM Venues");
+    count = countQuery.next() ? countQuery.value(0).toInt() : 0;
+    if (count == 0) return nullptr;
+
+    Venue* list = new Venue[count];
+    QSqlQuery query("SELECT * FROM Venues");
+    int i = 0;
+    while (query.next() && i < count) {
+        string name = query.value("Name").toString().toStdString();
+        string address = query.value("Address").toString().toStdString();
+        int capacity = query.value("Capacity").toInt();
+        string contactNumber = query.value("ContactNumber").toString().toStdString();
+        string contactEmail = query.value("ContactEmail").toString().toStdString();
+        bool hasWifi = query.value("HasWifi").toInt() == 1;
+        bool hasParking = query.value("HasParking").toInt() == 1;
+        bool hasCatering = query.value("HasCatering").toInt() == 1;
+        bool hasAVEquipment = query.value("HasAVEquipment").toInt() == 1;
+        list[i++] = Venue(name, address, capacity, contactNumber, contactEmail, hasWifi, hasParking, hasCatering, hasAVEquipment);
+    }
+    return list;
+}
+
+Event* Database::getAllEvents(int& count) {
+    QSqlQuery countQuery("SELECT COUNT(*) FROM Events");
+    count = countQuery.next() ? countQuery.value(0).toInt() : 0;
+    if (count == 0) return nullptr;
+
+    Event* list = new Event[count];
+    QSqlQuery query("SELECT * FROM Events");
+    int i = 0;
+    while (query.next() && i < count) {
+        string name = query.value("Name").toString().toStdString();
+        string description = query.value("Description").toString().toStdString();
+        string date = query.value("Date").toString().toStdString();
+        string time = query.value("Time").toString().toStdString();
+        int duration = query.value("Duration").toInt();
+        int capacity = query.value("Capacity").toInt();
+        int type = query.value("Type").toInt();
+        int status = query.value("Status").toInt();
+        Event e(name, description, date, time, duration, capacity, type);
+        e.setVenueId(query.value("VenueID").toInt());
+        e.changeStatus(status);
+        list[i++] = e;
+    }
+    return list;
+}
+
+Registration* Database::getAllRegistrations(int& count) {
+    QSqlQuery countQuery("SELECT COUNT(*) FROM Registrations");
+    count = countQuery.next() ? countQuery.value(0).toInt() : 0;
+    if (count == 0) return nullptr;
+
+    Registration* list = new Registration[count];
+    QSqlQuery query("SELECT * FROM Registrations");
+    int i = 0;
+    while (query.next() && i < count) {
+        int id = query.value("RegistrationID").toInt();
+        int eventId = query.value("EventID").toInt();
+        int attendeeId = query.value("AttendeeID").toInt();
+        int regStatus = query.value("RegistrationStatus").toInt();
+        int payStatus = query.value("PaymentStatus").toInt();
+        string date = query.value("RegistrationDate").toString().toStdString();
+        double amountPaid = query.value("AmountPaid").toDouble();
+        double totalAmount = query.value("TotalAmount").toDouble();
+        string notes = query.value("Notes").toString().toStdString();
+        list[i++] = Registration(id, eventId, attendeeId, regStatus, payStatus, date, amountPaid, totalAmount, notes);
+    }
+    return list;
+}
+
+BudgetItem* Database::getAllBudgetItems(int& count) {
+    QSqlQuery countQuery("SELECT COUNT(*) FROM BudgetItems");
+    count = countQuery.next() ? countQuery.value(0).toInt() : 0;
+    if (count == 0) return nullptr;
+
+    BudgetItem* list = new BudgetItem[count];
+    QSqlQuery query("SELECT * FROM BudgetItems");
+    int i = 0;
+    while (query.next() && i < count) {
+        int eventId = query.value("EventID").toInt();
+        string type = query.value("Type").toString().toStdString();
+        string category = query.value("Category").toString().toStdString();
+        double amount = query.value("Amount").toDouble();
+        string date = query.value("Date").toString().toStdString();
+        string status = query.value("Status").toString().toStdString();
+        list[i++] = BudgetItem(eventId, type, category, amount, date, status);
+    }
+    return list;
 }
