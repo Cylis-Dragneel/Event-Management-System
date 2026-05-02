@@ -97,8 +97,133 @@ bool Database::createTables() {
         qDebug() << "Failed to create BudgetItems table:" << query.lastError().text();
         allSuccess = false;
     }
+    // 6. Users Table
+    QString createUsers = "CREATE TABLE IF NOT EXISTS Users ("
+        "UserID INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "Username TEXT NOT NULL UNIQUE, "
+        "Password TEXT NOT NULL, "
+        "Email TEXT NOT NULL, "
+        "Role INTEGER NOT NULL)";
+    if (!query.exec(createUsers)) {
+        qDebug() << "Failed to create Users table:" << query.lastError().text();
+        allSuccess = false;
+    }
     return allSuccess;
 }
+
+// ================= USER OPERATIONS =================
+bool Database::addUser(const User& user) {
+    QSqlQuery query;
+    query.prepare("INSERT INTO Users (Username, Password, Email, Role) "
+        "VALUES (:username, :password, :email, :role)");
+    query.bindValue(":username", QString::fromStdString(user.getUsername()));
+    query.bindValue(":password", QString::fromStdString(user.getPassword()));
+    query.bindValue(":email", QString::fromStdString(user.getEmail()));
+    query.bindValue(":role", user.getRole());
+
+    if (!query.exec()) {
+        qDebug() << "Error adding user:" << query.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+User* Database::getUser(const std::string& username) {
+    QSqlQuery query;
+    query.prepare("SELECT * FROM Users WHERE Username = :username");
+    query.bindValue(":username", QString::fromStdString(username));
+
+    if (query.exec() && query.next()) {
+        int userId = query.value("UserID").toInt();
+        std::string user = query.value("Username").toString().toStdString();
+        std::string pass = query.value("Password").toString().toStdString();
+        std::string email = query.value("Email").toString().toStdString();
+        int role = query.value("Role").toInt();
+
+        return new User(userId, user, pass, email, role);
+    }
+    return nullptr;
+}
+
+User* Database::loginUser(const std::string& username, const std::string& password) {
+    QSqlQuery query;
+    query.prepare("SELECT * FROM Users WHERE Username = :username AND Password = :password");
+    query.bindValue(":username", QString::fromStdString(username));
+    query.bindValue(":password", QString::fromStdString(password));
+
+    if (query.exec() && query.next()) {
+        int userId = query.value("UserID").toInt();
+        std::string user = query.value("Username").toString().toStdString();
+        std::string pass = query.value("Password").toString().toStdString();
+        std::string email = query.value("Email").toString().toStdString();
+        int role = query.value("Role").toInt();
+
+        return new User(userId, user, pass, email, role);
+    }
+    return nullptr;
+}
+
+bool Database::userExists(const std::string& username) {
+    QSqlQuery query;
+    query.prepare("SELECT COUNT(*) FROM Users WHERE Username = :username");
+    query.bindValue(":username", QString::fromStdString(username));
+
+    if (query.exec() && query.next()) {
+        return query.value(0).toInt() > 0;
+    }
+    return false;
+}
+
+User* Database::getAllUsers(int& count) {
+    QSqlQuery query;
+    query.prepare("SELECT * FROM Users");
+
+    count = 0;
+    if (!query.exec()) {
+        return nullptr;
+    }
+
+    while (query.next()) {
+        count++;
+    }
+
+    if (count == 0) {
+        return nullptr;
+    }
+
+    User* users = new User[count];
+    query.first();
+    for (int i = 0; i < count; i++) {
+        int userId = query.value("UserID").toInt();
+        std::string user = query.value("Username").toString().toStdString();
+        std::string pass = query.value("Password").toString().toStdString();
+        std::string email = query.value("Email").toString().toStdString();
+        int role = query.value("Role").toInt();
+
+        users[i] = User(userId, user, pass, email, role);
+        query.next();
+    }
+    return users;
+}
+
+bool Database::updateUser(const User& user) {
+    QSqlQuery query;
+    query.prepare("UPDATE Users SET Username=:u, Password=:p, Email=:e, Role=:r WHERE UserID=:id");
+    query.bindValue(":u", QString::fromStdString(user.getUsername()));
+    query.bindValue(":p", QString::fromStdString(user.getPassword()));
+    query.bindValue(":e", QString::fromStdString(user.getEmail()));
+    query.bindValue(":r", user.getRole());
+    query.bindValue(":id", user.getUserId());
+    return query.exec();
+}
+
+bool Database::deleteUser(int id) {
+    QSqlQuery query;
+    query.prepare("DELETE FROM Users WHERE UserID=:id");
+    query.bindValue(":id", id);
+    return query.exec();
+}
+
 // ================= ATTENDEE OPERATIONS =================
 bool Database::addAttendee(const Attendee& attendee) {
     QSqlQuery query;

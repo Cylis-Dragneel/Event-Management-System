@@ -12,6 +12,7 @@
 #include "event.h"
 #include "Registration.h"
 #include "BudgetItem.h"
+#include "user.h"
 
 
 class Database {
@@ -25,6 +26,12 @@ public:
     bool connectDatabase();
     void closeDatabase();
     bool createTables();
+
+    // ================= USER OPERATIONS =================
+    bool addUser(const User& user);
+    User* getUser(const std::string& username);
+    User* loginUser(const std::string& username, const std::string& password);
+    bool userExists(const std::string& username);
 
     // ================= ATTENDEE OPERATIONS =================
     bool addAttendee(const Attendee& attendee);
@@ -45,6 +52,7 @@ public:
     BudgetItem getBudgetItem(int id);
 
     // ================= GET ALL OPERATIONS =================
+    User* getAllUsers(int& count);
     Attendee* getAllAttendees(int& count);
     Venue* getAllVenues(int& count);
     Event* getAllEvents(int& count);
@@ -52,6 +60,9 @@ public:
     BudgetItem* getAllBudgetItems(int& count);
 
     // ================= UPDATE & DELETE OPERATIONS =================
+    bool updateUser(const User& user);
+    bool deleteUser(int id);
+
     bool updateAttendee(const Attendee& attendee);
     bool deleteAttendee(int id);
 

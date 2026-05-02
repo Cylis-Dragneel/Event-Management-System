@@ -4,12 +4,12 @@
 #include <QMainWindow>
 
 class QLabel;
-class QComboBox;
 class QStackedWidget;
 class QWidget;
 class QPushButton;
 
 class Database;
+class User;
 class EventView;
 class VenueView;
 class RegistrationView;
@@ -21,13 +21,16 @@ public:
 
 private:
     void buildUi();
-    void applyRole(int roleIndex);
+    void showLogin();
+    void logout();
+    void applyUserRole();
     void toggleTheme();
 
     Database *database;
+    User *currentUser;
     QWidget *central;
     QLabel *titleLabel;
-    QComboBox *roleSelector;
+    QPushButton *authButton;
     QPushButton *themeButton;
     QStackedWidget *roleStack;
     bool isDarkMode;

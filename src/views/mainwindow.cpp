@@ -4,6 +4,7 @@
 #include "eventview.h"
 #include "registrationview.h"
 #include "venueview.h"
+#include "dialogs/logindialog.h"
 
 #include <QApplication>
 #include <QComboBox>
@@ -16,12 +17,15 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include "../models/user.h"
+
 MainWindow::MainWindow(Database *db, QWidget *parent)
     : QMainWindow(parent),
       database(db),
+      currentUser(nullptr),
       central(nullptr),
       titleLabel(nullptr),
-      roleSelector(nullptr),
+      authButton(nullptr),
       themeButton(nullptr),
       roleStack(nullptr),
       isDarkMode(false),
@@ -32,7 +36,7 @@ MainWindow::MainWindow(Database *db, QWidget *parent)
       attendeeEventView(nullptr),
       attendeeRegistrationView(nullptr) {
     buildUi();
-    applyRole(0);
+    showLogin();
 }
 
 void MainWindow::buildUi() {
@@ -45,8 +49,6 @@ void MainWindow::buildUi() {
     auto *headerLayout = new QHBoxLayout();
     titleLabel = new QLabel("Event Management Dashboard", central);
     titleLabel->setObjectName("titleLabel");
-    roleSelector = new QComboBox(central);
-    roleSelector->addItems({"Organizer", "Attendee"});
 
     themeButton = new QPushButton(central);
     themeButton->setObjectName("themeToggle");
@@ -54,11 +56,13 @@ void MainWindow::buildUi() {
     themeButton->setFixedWidth(100);
     themeButton->setToolTip("Toggle Dark/Light Mode");
 
+    authButton = new QPushButton("Login", central);
+    authButton->setFixedWidth(80);
+
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
     headerLayout->addWidget(themeButton);
-    headerLayout->addWidget(new QLabel("View", central));
-    headerLayout->addWidget(roleSelector);
+    headerLayout->addWidget(authButton);
     mainLayout->addLayout(headerLayout);
 
     roleStack = new QStackedWidget(central);
@@ -85,8 +89,12 @@ void MainWindow::buildUi() {
 
     setCentralWidget(central);
 
-    QObject::connect(roleSelector, &QComboBox::currentIndexChanged, this, [this](int index) {
-        applyRole(index);
+    QObject::connect(authButton, &QPushButton::clicked, this, [this]() {
+        if (currentUser) {
+            logout();
+        } else {
+            showLogin();
+        }
     });
 
     QObject::connect(themeButton, &QPushButton::clicked, this, [this]() {
@@ -94,13 +102,39 @@ void MainWindow::buildUi() {
     });
 }
 
-void MainWindow::applyRole(int roleIndex) {
-    roleStack->setCurrentIndex(roleIndex);
-    if (roleIndex == 0) {
+void MainWindow::showLogin() {
+    LoginDialog loginDialog(database, this);
+    if (loginDialog.exec() == QDialog::Accepted && loginDialog.getUser()) {
+        currentUser = loginDialog.getUser();
+        applyUserRole();
+    } else {
+        if (!currentUser) {
+            qApp->quit();
+        }
+    }
+}
+
+void MainWindow::applyUserRole() {
+    if (currentUser->isOrganizer()) {
         titleLabel->setText("Event Management Dashboard");
+        roleStack->setCurrentIndex(0);
+        authButton->setText("Logout");
     } else {
         titleLabel->setText("Event Discovery");
+        roleStack->setCurrentIndex(1);
+        authButton->setText("Logout");
     }
+}
+
+void MainWindow::logout() {
+    if (currentUser) {
+        delete currentUser;
+        currentUser = nullptr;
+    }
+    titleLabel->setText("Event Management Dashboard");
+    authButton->setText("Login");
+    roleStack->setCurrentIndex(0);
+    showLogin();
 }
 
 void MainWindow::toggleTheme() {
@@ -125,4 +159,3 @@ void MainWindow::toggleTheme() {
 
     qApp->setStyleSheet(stylesheet);
 }
-
