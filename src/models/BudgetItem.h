@@ -2,6 +2,8 @@
 #define BUDGETITEM_H
 #include <string>
 
+using namespace std;
+
 class BudgetItem {
 private:
     int eventId;

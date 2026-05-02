@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 using namespace std;
-
+int Attendee::nextId = 1;
 Attendee::Attendee() {
     attendeeId = -1;
     firstName = "";
