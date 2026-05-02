@@ -10,19 +10,21 @@ class QLineEdit;
 class QPushButton;
 class QSpinBox;
 class QTableWidget;
+class Database;
 
 class VenueView : public QWidget {
 public:
-    explicit VenueView(bool organizerMode, QWidget *parent = nullptr);
+    explicit VenueView(Database *database, bool organizerMode, QWidget *parent = nullptr);
     ~VenueView();
 
 private:
     void ensureVenueCapacity(int requiredCount);
     void appendVenue(const Venue &venue);
-    void seedVenues();
+    void loadFromDatabase();
     void rebuildTable();
     void deleteVenue(int index);
 
+    Database *database;
     bool isOrganizerMode;
     QLineEdit *searchEdit;
     QSpinBox *capacityFilter;

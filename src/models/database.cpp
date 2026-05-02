@@ -202,12 +202,12 @@ Event Database::getEvent(int id) {
     QSqlQuery query;
     query.prepare("SELECT * FROM Events WHERE EventID = :id");
     query.bindValue(":id", id);
-    
+
     if (!query.exec()) {
         qDebug() << "Error getting event:" << query.lastError().text();
         return Event();
     }
-    
+
     if (query.next()) {
         string name = query.value("Name").toString().toStdString();
         string description = query.value("Description").toString().toStdString();
@@ -397,7 +397,7 @@ bool Database::updateBudgetItem(int id, const BudgetItem& item) {
     query.bindValue(":id", id);
     return query.exec();
 }
-}
+
 bool Database::deleteBudgetItem(int id) {
     QSqlQuery query;
     query.prepare("DELETE FROM BudgetItems WHERE ItemID=:id");

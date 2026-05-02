@@ -1,6 +1,7 @@
 #include "budgetview.h"
 
 #include "dialogs/budgetitemdialog.h"
+#include "../models/database.h"
 
 #include <QComboBox>
 #include <QGridLayout>
@@ -14,8 +15,9 @@
 #include <QTableWidgetItem>
 #include <QVBoxLayout>
 
-BudgetView::BudgetView(bool organizerMode, QWidget *parent)
+BudgetView::BudgetView(Database *db, bool organizerMode, QWidget *parent)
     : QWidget(parent),
+      database(db),
       isOrganizerMode(organizerMode),
       eventFilter(new QComboBox(this)),
       typeFilter(new QComboBox(this)),
@@ -73,7 +75,7 @@ BudgetView::BudgetView(bool organizerMode, QWidget *parent)
     addExpenseButton->setEnabled(isOrganizerMode);
     deleteItemButton->setEnabled(isOrganizerMode);
 
-    seedData();
+    loadFromDatabase();
     rebuildTable();
     updateSummary();
 
@@ -213,33 +215,32 @@ BudgetView::BudgetView(bool organizerMode, QWidget *parent)
     });
 }
 
-void BudgetView::seedData() {
-    // Three EventBudgets matching the seeded events in EventView (IDs 1, 2, 3)
-    EventBudget eb1(1, "Tech Summit 2026");
-    eb1.addItem(BudgetItem(1, "income",  "marketing", 15000.00, "15-09-2026", "paid"));
-    eb1.addItem(BudgetItem(1, "income",  "other",      8000.00, "01-09-2026", "paid"));
-    eb1.addItem(BudgetItem(1, "expense", "venue",      5000.00, "10-09-2026", "paid"));
-    eb1.addItem(BudgetItem(1, "expense", "catering",   2500.00, "14-09-2026", "pending"));
+void BudgetView::loadFromDatabase() {
+    if (!database) {
+        return;
+    }
 
-    EventBudget eb2(2, "Design Workshop");
-    eb2.addItem(BudgetItem(2, "income",  "other",     3000.00, "22-08-2026", "paid"));
-    eb2.addItem(BudgetItem(2, "expense", "equipment", 1200.00, "20-08-2026", "paid"));
-    eb2.addItem(BudgetItem(2, "expense", "catering",   600.00, "22-08-2026", "pending"));
+    int count = 0;
+    BudgetItem *items = database->getAllBudgetItems(count);
 
-    EventBudget eb3(3, "Community Concert");
-    eb3.addItem(BudgetItem(3, "income",  "marketing", 20000.00, "05-10-2026", "paid"));
-    eb3.addItem(BudgetItem(3, "income",  "other",      5000.00, "01-10-2026", "pending"));
-    eb3.addItem(BudgetItem(3, "expense", "equipment",  8000.00, "03-10-2026", "paid"));
-    eb3.addItem(BudgetItem(3, "expense", "venue",      4000.00, "01-10-2026", "paid"));
+    QMap<int, EventBudget> eventBudgets;
 
-    manager.addEvent(eb1);
-    manager.addEvent(eb2);
-    manager.addEvent(eb3);
+    for (int i = 0; i < count; i++) {
+        int eventId = items[i].getEventId();
+        if (!eventBudgets.contains(eventId)) {
+            eventBudgets[eventId] = EventBudget(eventId, "Event " + std::to_string(eventId));
+        }
+        eventBudgets[eventId].addItem(items[i]);
+    }
 
-    eventIds[0] = 1;
-    eventIds[1] = 2;
-    eventIds[2] = 3;
-    eventCount  = 3;
+    for (QMap<int, EventBudget>::iterator it = eventBudgets.begin(); it != eventBudgets.end(); ++it) {
+        manager.addEvent(it.value());
+        if (eventCount < 64) {
+            eventIds[eventCount++] = it.key();
+        }
+    }
+
+    delete[] items;
 }
 
 void BudgetView::rebuildTable() {

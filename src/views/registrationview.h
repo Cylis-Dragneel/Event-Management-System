@@ -10,15 +10,18 @@ class QComboBox;
 class QLineEdit;
 class QPushButton;
 class QTableWidget;
+class Database;
 
 class RegistrationView : public QWidget {
 public:
-    explicit RegistrationView(bool organizerMode, QWidget *parent = nullptr);
+    explicit RegistrationView(Database *database, bool organizerMode, QWidget *parent = nullptr);
+    ~RegistrationView();
 
 private:
-    void seedData();
+    void loadFromDatabase();
     void rebuildTable();
 
+    Database *database;
     bool isOrganizerMode;
     QLineEdit    *searchEdit;
     QComboBox    *statusFilter;
@@ -30,9 +33,10 @@ private:
     QPushButton  *exportButton;
     QPushButton  *refreshButton;
 
-    Attendee     attendees[64];
-    Registration registrations[64];
+    Attendee     *attendees;
+    Registration *registrations;
     int          regCount;
+    int          regCapacity;
     int          nextRegId;
 
     static const int EVENT_COUNT = 3;

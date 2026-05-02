@@ -28,6 +28,7 @@ set(HEADERS
   src/models/BudgetItem.h
   src/models/EventBudget.h
   src/models/BudgetManager.h
+  src/models/database.h
 )
 
 set(SOURCES
@@ -52,6 +53,7 @@ set(SOURCES
   src/models/Attendee.cpp
   src/models/Registration.cpp
   src/models/CSVExporter.cpp
+  src/models/database.cpp
 )
 
 set(RESOURCES

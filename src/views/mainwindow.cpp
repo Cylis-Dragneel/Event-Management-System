@@ -13,8 +13,9 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(Database *db, QWidget *parent)
     : QMainWindow(parent),
+      database(db),
       central(nullptr),
       titleLabel(nullptr),
       roleSelector(nullptr),
@@ -50,18 +51,18 @@ void MainWindow::buildUi() {
     roleStack = new QStackedWidget(central);
 
     auto *organizerTabs = new QTabWidget(roleStack);
-    organizerEventView = new EventView(true, organizerTabs);
-    organizerVenueView = new VenueView(true, organizerTabs);
-    organizerRegistrationView = new RegistrationView(true, organizerTabs);
-    organizerBudgetView = new BudgetView(true, organizerTabs);
+    organizerEventView = new EventView(database, true, organizerTabs);
+    organizerVenueView = new VenueView(database, true, organizerTabs);
+    organizerRegistrationView = new RegistrationView(database, true, organizerTabs);
+    organizerBudgetView = new BudgetView(database, true, organizerTabs);
     organizerTabs->addTab(organizerEventView, "Events");
     organizerTabs->addTab(organizerVenueView, "Venues");
     organizerTabs->addTab(organizerRegistrationView, "Registrations");
     organizerTabs->addTab(organizerBudgetView, "Budgets");
 
     auto *attendeeTabs = new QTabWidget(roleStack);
-    attendeeEventView = new EventView(false, attendeeTabs);
-    attendeeRegistrationView = new RegistrationView(false, attendeeTabs);
+    attendeeEventView = new EventView(database, false, attendeeTabs);
+    attendeeRegistrationView = new RegistrationView(database, false, attendeeTabs);
     attendeeTabs->addTab(attendeeEventView, "Browse Events");
     attendeeTabs->addTab(attendeeRegistrationView, "My Registrations");
 

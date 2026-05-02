@@ -3,8 +3,6 @@
 #include <string>
 using namespace std;
 
-using namespace std;
-
 class BudgetItem {
 private:
     int eventId;
@@ -20,14 +18,14 @@ public:
     BudgetItem();
     BudgetItem(int eventId, string t, string c, double a, string d, string status);
 
-    void setType(string t);                 
+    void setType(string t);
     void setCategory(string c);
     void setAmount(double a);
     void setDate(string d);
     void setStatus(string s);
     void setEventId(int id);
 
-    int getID() const;                     
+    int getID() const;
     string getType() const;
     string getCategory() const;
     double getAmount() const;

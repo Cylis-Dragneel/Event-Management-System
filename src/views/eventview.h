@@ -10,19 +10,21 @@ class QDateEdit;
 class QLineEdit;
 class QPushButton;
 class QTableWidget;
+class Database;
 
 class EventView : public QWidget {
 public:
-    explicit EventView(bool organizerMode, QWidget *parent = nullptr);
+    explicit EventView(Database *database, bool organizerMode, QWidget *parent = nullptr);
     ~EventView();
 
 private:
     void ensureEventCapacity(int requiredCount);
     void appendEvent(const Event &event);
-    void seedEvents();
+    void loadFromDatabase();
     void rebuildTable();
     void deleteEvent(int index);
 
+    Database *database;
     bool isOrganizerMode;
     QLineEdit *searchEdit;
     QComboBox *typeFilter;

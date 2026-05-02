@@ -16,8 +16,11 @@
 #include <QTableWidgetItem>
 #include <QVBoxLayout>
 
-EventView::EventView(bool organizerMode, QWidget *parent)
+#include "../models/database.h"
+
+EventView::EventView(Database *db, bool organizerMode, QWidget *parent)
     : QWidget(parent),
+      database(db),
       isOrganizerMode(organizerMode),
       searchEdit(new QLineEdit(this)),
       typeFilter(new QComboBox(this)),
@@ -73,7 +76,7 @@ EventView::EventView(bool organizerMode, QWidget *parent)
     editButton->setEnabled(isOrganizerMode);
     deleteButton->setEnabled(isOrganizerMode);
 
-    seedEvents();
+    loadFromDatabase();
     rebuildTable();
 
     QObject::connect(refreshButton, &QPushButton::clicked, this, [this]() {
@@ -126,6 +129,9 @@ EventView::EventView(bool organizerMode, QWidget *parent)
             if (dialog.getVenueId() > 0)
                 e.setVenueId(dialog.getVenueId());
             e.changeStatus(dialog.getStatus());
+            if (database) {
+                database->updateEvent(e.getEventId(), e);
+            }
             rebuildTable();
         } catch (const std::invalid_argument &e2) {
             QMessageBox::warning(this, "Edit Event", QString::fromStdString(e2.what()));
@@ -179,26 +185,34 @@ void EventView::appendEvent(const Event &event) {
     Event *tail = events + eventCount;
     *tail = event;
     ++eventCount;
+
+    if (database) {
+        database->addEvent(event);
+    }
 }
 
-void EventView::seedEvents() {
-    appendEvent(Event("Tech Summit 2026", "Annual technology conference", "15-09-2026", "10:00", 180, 300, 0));
-    appendEvent(Event("Design Workshop", "Hands-on design sprint", "22-08-2026", "09:30", 120, 60, 1));
-    appendEvent(Event("Community Concert", "Outdoor social music event", "05-10-2026", "18:30", 150, 500, 2));
+void EventView::loadFromDatabase() {
+    if (!database) return;
 
-    Event *first = events;
-    first->setVenueId(101);
+    int count = 0;
+    Event *allEvents = database->getAllEvents(count);
 
-    Event *second = events + 1;
-    second->setVenueId(203);
-    second->changeStatus(1);
+    for (int i = 0; i < count; i++) {
+        ensureEventCapacity(eventCount + 1);
+        Event *tail = events + eventCount;
+        *tail = allEvents[i];
+        ++eventCount;
+    }
 
-    Event *third = events + 2;
-    third->setVenueId(305);
-    third->changeStatus(1);
+    delete[] allEvents;
 }
 
 void EventView::deleteEvent(int index) {
+    Event &e = *(events + index);
+    if (database) {
+        database->deleteEvent(e.getEventId());
+    }
+
     for (int i = index; i < eventCount - 1; i++) {
         *(events + i) = *(events + i + 1);
     }

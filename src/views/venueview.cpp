@@ -14,8 +14,11 @@
 #include <QTableWidgetItem>
 #include <QVBoxLayout>
 
-VenueView::VenueView(bool organizerMode, QWidget *parent)
+#include "../models/database.h"
+
+VenueView::VenueView(Database *db, bool organizerMode, QWidget *parent)
     : QWidget(parent),
+      database(db),
       isOrganizerMode(organizerMode),
       searchEdit(new QLineEdit(this)),
       capacityFilter(new QSpinBox(this)),
@@ -63,7 +66,7 @@ VenueView::VenueView(bool organizerMode, QWidget *parent)
     editButton->setEnabled(isOrganizerMode);
     deleteButton->setEnabled(isOrganizerMode);
 
-    seedVenues();
+    loadFromDatabase();
     rebuildTable();
 
     QObject::connect(refreshButton, &QPushButton::clicked, this, [this]() {
@@ -115,6 +118,9 @@ VenueView::VenueView(bool organizerMode, QWidget *parent)
             v.setHasParking(dialog.getHasParking());
             v.setHasCatering(dialog.getHasCatering());
             v.setHasAVEquipment(dialog.getHasAVEquipment());
+            if (database) {
+                database->updateVenue(v.getVenueId(), v);
+            }
             rebuildTable();
         } catch (const std::invalid_argument &e) {
             QMessageBox::warning(this, "Edit Venue", QString::fromStdString(e.what()));
@@ -168,15 +174,34 @@ void VenueView::appendVenue(const Venue &venue) {
     Venue *tail = venues + venueCount;
     *tail = venue;
     ++venueCount;
+
+    if (database) {
+        database->addVenue(venue);
+    }
 }
 
-void VenueView::seedVenues() {
-    appendVenue(Venue("Tech Arena", "Main Boulevard, City Center", 350, "0300-1234567", "arena@events.com", true, true, false, true));
-    appendVenue(Venue("Community Hall", "Block A, Riverside", 120, "042-12345678", "hall@events.com", true, false, true, false));
-    appendVenue(Venue("Grand Expo", "Industrial Zone, Sector 9", 900, "0312-7654321", "expo@events.com", true, true, true, true));
+void VenueView::loadFromDatabase() {
+    if (!database) return;
+
+    int count = 0;
+    Venue *allVenues = database->getAllVenues(count);
+
+    for (int i = 0; i < count; i++) {
+        ensureVenueCapacity(venueCount + 1);
+        Venue *tail = venues + venueCount;
+        *tail = allVenues[i];
+        ++venueCount;
+    }
+
+    delete[] allVenues;
 }
 
 void VenueView::deleteVenue(int index) {
+    Venue &v = *(venues + index);
+    if (database) {
+        database->deleteVenue(v.getVenueId());
+    }
+
     for (int i = index; i < venueCount - 1; i++) {
         *(venues + i) = *(venues + i + 1);
     }

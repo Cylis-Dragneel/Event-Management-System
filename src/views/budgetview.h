@@ -9,16 +9,18 @@ class QComboBox;
 class QLabel;
 class QPushButton;
 class QTableWidget;
+class Database;
 
 class BudgetView : public QWidget {
 public:
-    explicit BudgetView(bool organizerMode, QWidget *parent = nullptr);
+    explicit BudgetView(Database *database, bool organizerMode, QWidget *parent = nullptr);
 
 private:
-    void seedData();
+    void loadFromDatabase();
     void rebuildTable();
     void updateSummary();
 
+    Database *database;
     bool isOrganizerMode;
     QComboBox    *eventFilter;
     QComboBox    *typeFilter;

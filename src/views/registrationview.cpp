@@ -2,6 +2,7 @@
 
 #include "dialogs/registrationdialog.h"
 #include "../models/CSVExporter.h"
+#include "../models/database.h"
 
 #include <QComboBox>
 #include <QDate>
@@ -21,8 +22,9 @@
 #include <stdexcept>
 #include <cstring>
 
-RegistrationView::RegistrationView(bool organizerMode, QWidget *parent)
+RegistrationView::RegistrationView(Database *db, bool organizerMode, QWidget *parent)
     : QWidget(parent),
+      database(db),
       isOrganizerMode(organizerMode),
       searchEdit(new QLineEdit(this)),
       statusFilter(new QComboBox(this)),
@@ -33,7 +35,10 @@ RegistrationView::RegistrationView(bool organizerMode, QWidget *parent)
       cancelButton(new QPushButton("Cancel", this)),
       exportButton(new QPushButton("Export CSV", this)),
       refreshButton(new QPushButton("Refresh", this)),
+      attendees(new Attendee[64]),
+      registrations(new Registration[64]),
       regCount(0),
+      regCapacity(64),
       nextRegId(1) {
 
     // Hardcoded events matching EventView seed
@@ -78,7 +83,7 @@ RegistrationView::RegistrationView(bool organizerMode, QWidget *parent)
     cancelButton->setEnabled(isOrganizerMode);
     exportButton->setEnabled(isOrganizerMode);
 
-    seedData();
+    loadFromDatabase();
     rebuildTable();
 
     QObject::connect(refreshButton, &QPushButton::clicked, this, [this]() {
@@ -201,20 +206,27 @@ RegistrationView::RegistrationView(bool organizerMode, QWidget *parent)
     });
 }
 
-void RegistrationView::seedData() {
-    // Seed attendees using the non-validating auto-ID constructor
-    attendees[0] = Attendee("Ali",    "Hassan", "ali.hassan@email.com",   "0301-1234567");
-    attendees[1] = Attendee("Sara",   "Ahmed",  "sara.ahmed@email.com",   "");
-    attendees[2] = Attendee("Umar",   "Khan",   "umar.khan@email.com",    "0312-9876543");
-    attendees[3] = Attendee("Fatima", "Ali",    "fatima.ali@email.com",   "");
+void RegistrationView::loadFromDatabase() {
+    if (!database) {
+        return;
+    }
 
-    // Seed registrations
-    registrations[0] = Registration(nextRegId++, 1, attendees[0].getAttendeeId(), 2, 2, "10-09-2026", 150.0, 150.0, "VIP seat");
-    registrations[1] = Registration(nextRegId++, 1, attendees[1].getAttendeeId(), 1, 1, "12-09-2026",   0.0, 150.0, "");
-    registrations[2] = Registration(nextRegId++, 2, attendees[2].getAttendeeId(), 2, 4, "15-08-2026",  50.0, 100.0, "Partial payment");
-    registrations[3] = Registration(nextRegId++, 3, attendees[3].getAttendeeId(), 4, 1, "20-09-2026",   0.0, 200.0, "On waitlist");
+    int regCountDb = 0;
+    Registration *allRegs = database->getAllRegistrations(regCountDb);
 
-    regCount = 4;
+    for (int i = 0; i < regCountDb && regCount < regCapacity; i++) {
+        registrations[regCount] = allRegs[i];
+        regCount++;
+    }
+
+    delete[] allRegs;
+
+    int attCountDb = 0;
+    Attendee *allAtts = database->getAllAttendees(attCountDb);
+    for (int i = 0; i < attCountDb && i < 64; i++) {
+        attendees[i] = allAtts[i];
+    }
+    delete[] allAtts;
 }
 
 void RegistrationView::rebuildTable() {
@@ -269,4 +281,9 @@ void RegistrationView::rebuildTable() {
     }
 
     registrationsTable->setSortingEnabled(true);
+}
+
+RegistrationView::~RegistrationView() {
+    delete[] attendees;
+    delete[] registrations;
 }

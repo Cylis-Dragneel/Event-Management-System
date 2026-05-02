@@ -8,6 +8,7 @@ class QComboBox;
 class QStackedWidget;
 class QWidget;
 
+class Database;
 class EventView;
 class VenueView;
 class RegistrationView;
@@ -15,12 +16,13 @@ class BudgetView;
 
 class MainWindow : public QMainWindow {
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(Database *database, QWidget *parent = nullptr);
 
 private:
     void buildUi();
     void applyRole(int roleIndex);
 
+    Database *database;
     QWidget *central;
     QLabel *titleLabel;
     QComboBox *roleSelector;
