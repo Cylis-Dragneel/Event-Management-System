@@ -301,12 +301,12 @@ void Registration::setAmountPaid(double amount) {
 }
 
 void Registration::setTotalAmount(double amount) {
-    // Edge case: amount cannot be negative
+    //  amount cannot be negative
     if(amount < 0) {
         throw invalid_argument("Total amount cannot be negative!");
     }
     
-    // Edge case: new total cannot be less than already paid
+    //  new total cannot be less than already paid
     if(amountPaid > amount) {
         throw invalid_argument("New total cannot be less than amount already paid!");
     }
@@ -379,11 +379,9 @@ bool Registration::makePayment(double amount) {
     // Update payment status
     if(amountPaid >= totalAmount) {
         paymentStatus = 2;
-        cout << "Payment complete! Fully paid." << endl;
     }
     else if(amountPaid > 0) {
         paymentStatus = 4;
-        cout << "Payment received. Remaining: " << getRemainingBalance() << endl;
     }
     
     return true;
@@ -411,11 +409,10 @@ bool Registration::refundPayment(double amount) {
     if(amountPaid <= 0) {
         amountPaid = 0;
         paymentStatus = 1;
-        cout << "Full refund processed." << endl;
     }
     else if(amountPaid < totalAmount) {
         paymentStatus = 4;
-        cout << "Partial refund processed." << endl;
+       
     }
     
     return true;
@@ -435,7 +432,7 @@ void Registration::confirmRegistration() {
     // Can confirm Pending(1) or Waitlisted(4)
     if(registrationStatus == 1 || registrationStatus == 4) {
         registrationStatus = 2;
-        cout << "Registration confirmed!" << endl;
+    
     }
 }
 
@@ -448,10 +445,8 @@ void Registration::cancelRegistration() {
     // Can cancel Pending(1), Confirmed(2), or Waitlisted(4)
     if(registrationStatus == 1 || registrationStatus == 2 || registrationStatus == 4) {
         registrationStatus = 3;
-        cout << "Registration cancelled!" << endl;
         
         if(amountPaid > 0) {
-            cout << "Note: Refund recommended of Rs " << amountPaid << endl;
         }
     }
 }
@@ -465,7 +460,7 @@ void Registration::moveToWaitlist() {
     // Only Pending(1) can move to waitlist
     if(registrationStatus == 1) {
         registrationStatus = 4;
-        cout << "Moved to waitlist!" << endl;
+
     }
     else if(registrationStatus == 2) {
         throw invalid_argument("Cannot move confirmed registration to waitlist!");
@@ -482,5 +477,5 @@ void Registration::moveFromWaitlistToConfirmed() {
     }
     
     registrationStatus = 2;
-    cout << "Moved from waitlist to confirmed!" << endl;
+
 }
