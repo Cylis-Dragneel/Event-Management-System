@@ -6,6 +6,9 @@
 #include "../models/Attendee.h"
 #include "../models/Registration.h"
 
+#include <QMap>
+#include <QString>
+
 class QComboBox;
 class QLineEdit;
 class QPushButton;
@@ -45,9 +48,7 @@ private:
     int          regCapacity;
     int          nextRegId;
 
-    static const int EVENT_COUNT = 3;
-    int  eventIds[EVENT_COUNT];
-    char eventNames[EVENT_COUNT][64];
+    QMap<int, QString> eventNames;
 };
 
 #endif

@@ -14,9 +14,9 @@ class RegistrationDialog : public QDialog {
 public:
     explicit RegistrationDialog(QWidget *parent = nullptr);
 
-    void setEvents(const QStringList &eventNames);
+    void setEvents(const QStringList &eventNames, const QList<int> &eventIds);
 
-    int     getEventIndex()  const;
+    int     getEventId()     const;
     QString getFirstName()   const;
     QString getLastName()    const;
     QString getEmail()       const;

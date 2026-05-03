@@ -4,6 +4,7 @@
 #include "dialogs/registrationdialog.h"
 #include "../models/CSVExporter.h"
 #include "../models/database.h"
+#include "../models/event.h"
 
 #include <QComboBox>
 #include <QDate>
@@ -43,11 +44,6 @@ RegistrationView::RegistrationView(Database *db, bool organizerMode, User *user,
       regCount(0),
       regCapacity(64),
       nextRegId(1) {
-
-    // Hardcoded events matching EventView seed
-    eventIds[0] = 1; strcpy(eventNames[0], "Tech Summit 2026");
-    eventIds[1] = 2; strcpy(eventNames[1], "Design Workshop");
-    eventIds[2] = 3; strcpy(eventNames[2], "Community Concert");
 
     auto *mainLayout = new QVBoxLayout(this);
 
@@ -113,17 +109,25 @@ RegistrationView::RegistrationView(Database *db, bool organizerMode, User *user,
     });
 
     QObject::connect(registerButton, &QPushButton::clicked, this, [this]() {
-        RegistrationDialog dialog(this);
         QStringList names;
-        for (int i = 0; i < EVENT_COUNT; i++) {
-            names << QString(eventNames[i]);
+        QList<int> ids;
+        if (database) {
+            int count = 0;
+            Event *events = database->getAllEvents(count);
+            for (int i = 0; i < count; i++) {
+                names << QString::fromStdString(events[i].getName());
+                ids << events[i].getEventId();
+            }
+            delete[] events;
         }
-        dialog.setEvents(names);
+
+        RegistrationDialog dialog(this);
+        dialog.setEvents(names, ids);
 
         if (dialog.exec() != QDialog::Accepted) return;
 
-        int idx = dialog.getEventIndex();
-        if (idx < 0 || idx >= EVENT_COUNT) return;
+        int eventId = dialog.getEventId();
+        if (eventId <= 0) return;
 
         if (regCount >= 64) {
             QMessageBox::warning(this, "Register", "Maximum registrations reached.");
@@ -168,7 +172,7 @@ RegistrationView::RegistrationView(Database *db, bool organizerMode, User *user,
             }
 
             Registration newReg(nextRegId,
-                                eventIds[idx],
+                                eventId,
                                 attendeeId,
                                 1,       // Pending
                                 1,       // Unpaid
@@ -245,6 +249,13 @@ void RegistrationView::loadFromDatabase() {
         return;
     }
 
+    int eventCount = 0;
+    Event *events = database->getAllEvents(eventCount);
+    for (int i = 0; i < eventCount; i++) {
+        eventNames.insert(events[i].getEventId(), QString::fromStdString(events[i].getName()));
+    }
+    delete[] events;
+
     int regCountDb = 0;
     Registration *allRegs = nullptr;
     try {
@@ -278,6 +289,8 @@ void RegistrationView::reloadFromDatabase() {
     registrations = freshRegs;
     regCount = 0;
 
+    eventNames.clear();
+
     loadFromDatabase();
 }
 
@@ -309,11 +322,8 @@ void RegistrationView::rebuildTable() {
 
         // Event name lookup
         QString eventName = "Unknown";
-        for (int e = 0; e < EVENT_COUNT; e++) {
-            if (eventIds[e] == reg.getEventId()) {
-                eventName = QString(eventNames[e]);
-                break;
-            }
+        if (eventNames.contains(reg.getEventId())) {
+            eventName = eventNames.value(reg.getEventId());
         }
 
         double balance = reg.getTotalAmount() - reg.getAmountPaid();

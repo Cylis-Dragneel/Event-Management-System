@@ -54,13 +54,15 @@ RegistrationDialog::RegistrationDialog(QWidget *parent)
     QObject::connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
 
-void RegistrationDialog::setEvents(const QStringList &eventNames) {
+void RegistrationDialog::setEvents(const QStringList &eventNames, const QList<int> &eventIds) {
     eventEdit->clear();
-    eventEdit->addItems(eventNames);
+    for (int i = 0; i < eventNames.size(); i++) {
+        eventEdit->addItem(eventNames[i], eventIds[i]);
+    }
 }
 
-int RegistrationDialog::getEventIndex() const {
-    return eventEdit->currentIndex();
+int RegistrationDialog::getEventId() const {
+    return eventEdit->currentData().toInt();
 }
 
 QString RegistrationDialog::getFirstName() const {
