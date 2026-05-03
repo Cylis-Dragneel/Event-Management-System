@@ -14,14 +14,17 @@ class Database;
 
 class RegistrationView : public QWidget {
 public:
-    explicit RegistrationView(Database *database, bool organizerMode, QWidget *parent = nullptr);
+    explicit RegistrationView(Database *database, bool organizerMode, int currentUserId = -1, QWidget *parent = nullptr);
     ~RegistrationView();
 
 private:
     void loadFromDatabase();
     void rebuildTable();
+    void unregister();
+    void makePayment();
 
     Database *database;
+    int currentUserId;
     bool isOrganizerMode;
     QLineEdit    *searchEdit;
     QComboBox    *statusFilter;
@@ -30,6 +33,7 @@ private:
     QPushButton  *registerButton;
     QPushButton  *confirmButton;
     QPushButton  *cancelButton;
+    QPushButton  *payButton;
     QPushButton  *exportButton;
     QPushButton  *refreshButton;
 

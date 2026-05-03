@@ -64,7 +64,8 @@ bool Database::createTables() {
         "Capacity INTEGER, "
         "Status INTEGER, "
         "Type INTEGER, "
-        "VenueID INTEGER)";
+        "VenueID INTEGER, "
+        "Cost REAL DEFAULT 0)";
     if (!query.exec(createEvents)) {
         qDebug() << "Failed to create Events table:" << query.lastError().text();
         allSuccess = false;
@@ -305,8 +306,8 @@ Venue Database::getVenue(int id) {
 // ================= EVENT OPERATIONS =================
 bool Database::addEvent(const Event& event) {
     QSqlQuery query;
-    query.prepare("INSERT INTO Events (Name, Description, Date, Time, Duration, Capacity, Status, Type, VenueID) "
-        "VALUES (:name, :description, :date, :time, :duration, :capacity, :status, :type, :venueId)");
+    query.prepare("INSERT INTO Events (Name, Description, Date, Time, Duration, Capacity, Status, Type, VenueID, Cost) "
+        "VALUES (:name, :description, :date, :time, :duration, :capacity, :status, :type, :venueId, :cost)");
     query.bindValue(":name", QString::fromStdString(event.getName()));
     query.bindValue(":description", QString::fromStdString(event.getDescription()));
     query.bindValue(":date", QString::fromStdString(event.getDate()));
@@ -316,6 +317,7 @@ bool Database::addEvent(const Event& event) {
     query.bindValue(":status", event.getStatus());
     query.bindValue(":type", event.getType());
     query.bindValue(":venueId", event.getVenueId());
+    query.bindValue(":cost", event.getCost());
 
     if (!query.exec()) {
         qDebug() << "Error adding event:" << query.lastError().text();
@@ -327,13 +329,7 @@ Event Database::getEvent(int id) {
     QSqlQuery query;
     query.prepare("SELECT * FROM Events WHERE EventID = :id");
     query.bindValue(":id", id);
-
-    if (!query.exec()) {
-        qDebug() << "Error getting event:" << query.lastError().text();
-        return Event();
-    }
-
-    if (query.next()) {
+    if (query.exec() && query.next()) {
         string name = query.value("Name").toString().toStdString();
         string description = query.value("Description").toString().toStdString();
         string date = query.value("Date").toString().toStdString();
@@ -345,6 +341,7 @@ Event Database::getEvent(int id) {
 
         Event e(name, description, date, time, duration, capacity, type);
         e.setVenueId(query.value("VenueID").toInt());
+        e.setCost(query.value("Cost").toDouble());
         e.changeStatus(status);
         return e;
     }
@@ -466,7 +463,7 @@ bool Database::deleteVenue(int id) {
 bool Database::updateEvent(int id, const Event& event) {
     QSqlQuery query;
     query.prepare("UPDATE Events SET Name=:n, Description=:d, Date=:date, Time=:t, Duration=:dur, "
-                  "Capacity=:c, Status=:s, Type=:ty, VenueID=:vid WHERE EventID=:id");
+                  "Capacity=:c, Status=:s, Type=:ty, VenueID=:vid, Cost=:cost WHERE EventID=:id");
     query.bindValue(":n", QString::fromStdString(event.getName()));
     query.bindValue(":d", QString::fromStdString(event.getDescription()));
     query.bindValue(":date", QString::fromStdString(event.getDate()));
@@ -476,6 +473,7 @@ bool Database::updateEvent(int id, const Event& event) {
     query.bindValue(":s", event.getStatus());
     query.bindValue(":ty", event.getType());
     query.bindValue(":vid", event.getVenueId());
+    query.bindValue(":cost", event.getCost());
     query.bindValue(":id", id);
     return query.exec();
 }
@@ -583,6 +581,7 @@ Event* Database::getAllEvents(int& count) {
     QSqlQuery query("SELECT * FROM Events");
     int i = 0;
     while (query.next() && i < count) {
+        int eventId = query.value("EventID").toInt();
         string name = query.value("Name").toString().toStdString();
         string description = query.value("Description").toString().toStdString();
         string date = query.value("Date").toString().toStdString();
@@ -592,7 +591,9 @@ Event* Database::getAllEvents(int& count) {
         int type = query.value("Type").toInt();
         int status = query.value("Status").toInt();
         Event e(name, description, date, time, duration, capacity, type);
+        e.setEventId(eventId);
         e.setVenueId(query.value("VenueID").toInt());
+        e.setCost(query.value("Cost").toDouble());
         e.changeStatus(status);
         list[i++] = e;
     }

@@ -4,6 +4,7 @@
 #include <QDateTime>
 #include <QDateTimeEdit>
 #include <QDialogButtonBox>
+#include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QLineEdit>
 #include <QPlainTextEdit>
@@ -20,6 +21,7 @@ EventDialog::EventDialog(QWidget *parent)
       capacityEdit(new QSpinBox(this)),
       venueEdit(new QSpinBox(this)),
       statusEdit(new QComboBox(this)),
+      costEdit(new QDoubleSpinBox(this)),
       buttonBox(new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this)) {
     setWindowTitle("Event");
     resize(520, 460);
@@ -59,6 +61,12 @@ EventDialog::EventDialog(QWidget *parent)
     statusEdit->addItems({"Draft", "Published", "Completed", "Cancelled"});
     formLayout->addRow("Status", statusEdit);
 
+    costEdit->setRange(0, 10000);
+    costEdit->setValue(0);
+    costEdit->setPrefix("$ ");
+    costEdit->setDecimals(2);
+    formLayout->addRow("Registration Fee", costEdit);
+
     layout->addLayout(formLayout);
     layout->addWidget(buttonBox);
 
@@ -78,6 +86,7 @@ void EventDialog::populate(const Event &event) {
     capacityEdit->setValue(event.getCapacity());
     venueEdit->setValue(event.hasVenue() ? event.getVenueId() : 0);
     statusEdit->setCurrentIndex(event.getStatus());
+    costEdit->setValue(event.getCost());
 }
 
 QString EventDialog::getName() const {
@@ -114,4 +123,8 @@ int EventDialog::getVenueId() const {
 
 int EventDialog::getStatus() const {
     return statusEdit->currentIndex();
+}
+
+double EventDialog::getCost() const {
+    return costEdit->value();
 }

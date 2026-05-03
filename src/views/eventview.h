@@ -14,7 +14,7 @@ class Database;
 
 class EventView : public QWidget {
 public:
-    explicit EventView(Database *database, bool organizerMode, QWidget *parent = nullptr);
+    explicit EventView(Database *database, bool organizerMode, int currentUserId = -1, QWidget *parent = nullptr);
     ~EventView();
 
 private:
@@ -23,8 +23,10 @@ private:
     void loadFromDatabase();
     void rebuildTable();
     void deleteEvent(int index);
+    void registerForEvent();
 
     Database *database;
+    int currentUserId;
     bool isOrganizerMode;
     QLineEdit *searchEdit;
     QComboBox *typeFilter;
@@ -36,6 +38,7 @@ private:
     QPushButton *editButton;
     QPushButton *deleteButton;
     QPushButton *refreshButton;
+    QPushButton *registerButton;
 
     Event *events;
     int eventCount;

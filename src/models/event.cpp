@@ -6,7 +6,7 @@ using namespace std;
 int Event::nextEventId = 1;  
 
 Event::Event() {
-    eventId = nextEventId++; 
+    eventId = nextEventId++;
     name = "unknown";
     description = "none";
     date = "01-01-2000";
@@ -16,10 +16,11 @@ Event::Event() {
     status = 0; // Draft by default
     type = 0;  // Conference by default
     venueId = 0;
+    cost = 0.0;
 }
 
 Event::Event(string name, string description, string date, string time, int duration, int capacity, int type) {
-    this->eventId = nextEventId++; 
+    this->eventId = nextEventId++;
     setName(name);
     setDescription(description);
     setDate(date);
@@ -29,6 +30,7 @@ Event::Event(string name, string description, string date, string time, int dura
     setType(type);
     status = 0; // default
     venueId = 0;
+    cost = 0.0;
 }
 
 // SETTERS
@@ -97,10 +99,24 @@ void Event::setType(int type) {
 }
 
 void Event::setVenueId(int venueId) {
-    if(venueId > 0)
+    if(venueId >= 0)
         this->venueId = venueId;
+}
+
+void Event::setEventId(int id) {
+    if(id > 0)
+        eventId = id;
+}
+
+void Event::setCost(double c) {
+    if(c >= 0)
+        cost = c;
     else
-        throw invalid_argument("Invalid venue ID!");
+        throw invalid_argument("Cost cannot be negative!");
+}
+
+double Event::getCost() const {
+    return cost;
 }
 
 // GETTERS 

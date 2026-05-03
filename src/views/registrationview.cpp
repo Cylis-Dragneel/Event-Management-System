@@ -1,5 +1,6 @@
 #include "registrationview.h"
 
+#include "dialogs/paymentdialog.h"
 #include "dialogs/registrationdialog.h"
 #include "../models/CSVExporter.h"
 #include "../models/database.h"
@@ -22,9 +23,10 @@
 #include <stdexcept>
 #include <cstring>
 
-RegistrationView::RegistrationView(Database *db, bool organizerMode, QWidget *parent)
+RegistrationView::RegistrationView(Database *db, bool organizerMode, int userId, QWidget *parent)
     : QWidget(parent),
       database(db),
+      currentUserId(userId),
       isOrganizerMode(organizerMode),
       searchEdit(new QLineEdit(this)),
       statusFilter(new QComboBox(this)),
@@ -33,6 +35,7 @@ RegistrationView::RegistrationView(Database *db, bool organizerMode, QWidget *pa
       registerButton(new QPushButton("Register Attendee", this)),
       confirmButton(new QPushButton("Confirm", this)),
       cancelButton(new QPushButton("Cancel", this)),
+      payButton(new QPushButton("Pay", this)),
       exportButton(new QPushButton("Export CSV", this)),
       refreshButton(new QPushButton("Refresh", this)),
       attendees(new Attendee[64]),
@@ -75,13 +78,19 @@ RegistrationView::RegistrationView(Database *db, bool organizerMode, QWidget *pa
     actionsLayout->addWidget(registerButton);
     actionsLayout->addWidget(confirmButton);
     actionsLayout->addWidget(cancelButton);
+    actionsLayout->addWidget(payButton);
     actionsLayout->addWidget(exportButton);
     mainLayout->addLayout(actionsLayout);
 
     registerButton->setEnabled(isOrganizerMode);
     confirmButton->setEnabled(isOrganizerMode);
-    cancelButton->setEnabled(isOrganizerMode);
+    cancelButton->setEnabled(!isOrganizerMode);
+    payButton->setEnabled(!isOrganizerMode);
     exportButton->setEnabled(isOrganizerMode);
+
+    if (!isOrganizerMode) {
+        cancelButton->setText("Unregister");
+    }
 
     loadFromDatabase();
     rebuildTable();
@@ -140,9 +149,26 @@ RegistrationView::RegistrationView(Database *db, bool organizerMode, QWidget *pa
         QString today = QDate::currentDate().toString("dd-MM-yyyy");
 
         try {
+            // Save attendee to database first
+            if (database) {
+                database->addAttendee(newAttendee);
+            }
+
+            // Get the attendee ID (assuming it was auto-incremented)
+            int attendeeId = newAttendee.getAttendeeId();
+            if (attendeeId <= 0 && database) {
+                // If attendee ID not set, we need to get it from DB
+                int attCount = 0;
+                Attendee* allAtts = database->getAllAttendees(attCount);
+                if (attCount > 0) {
+                    attendeeId = allAtts[attCount - 1].getAttendeeId();
+                }
+                delete[] allAtts;
+            }
+
             Registration newReg(nextRegId,
                                 eventIds[idx],
-                                newAttendee.getAttendeeId(),
+                                attendeeId,
                                 1,       // Pending
                                 1,       // Unpaid
                                 today.toStdString(),
@@ -150,10 +176,22 @@ RegistrationView::RegistrationView(Database *db, bool organizerMode, QWidget *pa
                                 total,
                                 notes.toStdString());
 
+            // Save registration to database
+            if (database) {
+                database->addRegistration(newReg);
+                // Get the registration ID from DB
+                int regCountDb = 0;
+                Registration* allRegs = database->getAllRegistrations(regCountDb);
+                if (regCountDb > 0) {
+                    newReg.setRegistrationId(allRegs[regCountDb - 1].getRegistrationId());
+                    nextRegId = allRegs[regCountDb - 1].getRegistrationId() + 1;
+                }
+                delete[] allRegs;
+            }
+
             attendees[regCount]     = newAttendee;
             registrations[regCount] = newReg;
             regCount++;
-            nextRegId++;
             rebuildTable();
         } catch (const invalid_argument &e) {
             QMessageBox::warning(this, "Registration Error", QString::fromStdString(e.what()));
@@ -176,18 +214,11 @@ RegistrationView::RegistrationView(Database *db, bool organizerMode, QWidget *pa
     });
 
     QObject::connect(cancelButton, &QPushButton::clicked, this, [this]() {
-        int row = registrationsTable->currentRow();
-        if (row < 0) {
-            QMessageBox::information(this, "Cancel", "Select a registration row first.");
-            return;
-        }
-        int idx = registrationsTable->item(row, 0)->data(Qt::UserRole).toInt();
-        try {
-            registrations[idx].cancelRegistration();
-            rebuildTable();
-        } catch (const invalid_argument &e) {
-            QMessageBox::warning(this, "Cancel Error", QString::fromStdString(e.what()));
-        }
+        unregister();
+    });
+
+    QObject::connect(payButton, &QPushButton::clicked, this, [this]() {
+        makePayment();
     });
 
     QObject::connect(exportButton, &QPushButton::clicked, this, [this]() {
@@ -211,22 +242,38 @@ void RegistrationView::loadFromDatabase() {
         return;
     }
 
-    int regCountDb = 0;
-    Registration *allRegs = database->getAllRegistrations(regCountDb);
-
-    for (int i = 0; i < regCountDb && regCount < regCapacity; i++) {
-        registrations[regCount] = allRegs[i];
-        regCount++;
-    }
-
-    delete[] allRegs;
-
     int attCountDb = 0;
     Attendee *allAtts = database->getAllAttendees(attCountDb);
-    for (int i = 0; i < attCountDb && i < 64; i++) {
+    for (int i = 0; i < attCountDb && i < regCapacity; i++) {
         attendees[i] = allAtts[i];
     }
     delete[] allAtts;
+
+    int regCountDb = 0;
+    Registration *allRegs = nullptr;
+    try {
+        allRegs = database->getAllRegistrations(regCountDb);
+    } catch (const std::exception& e) {
+        qDebug() << "Error loading registrations:" << e.what();
+        return;
+    }
+
+    for (int i = 0; i < regCountDb && regCount < regCapacity; i++) {
+        try {
+            Registration reg = allRegs[i];
+            if (!isOrganizerMode && currentUserId != -1) {
+                if (reg.getAttendeeId() != currentUserId) {
+                    continue;
+                }
+            }
+            registrations[regCount] = reg;
+            regCount++;
+        } catch (const std::exception& e) {
+            qDebug() << "Skipping invalid registration:" << e.what();
+        }
+    }
+
+    delete[] allRegs;
 }
 
 void RegistrationView::rebuildTable() {
@@ -239,12 +286,20 @@ void RegistrationView::rebuildTable() {
 
     for (int i = 0; i < regCount; i++) {
         const Registration &reg = registrations[i];
-        const Attendee     &att = attendees[i];
+
+        Attendee emptyAtt;
+        const Attendee *att = &emptyAtt;
+        for (int a = 0; a < regCapacity; a++) {
+            if (attendees[a].getAttendeeId() == reg.getAttendeeId()) {
+                att = &attendees[a];
+                break;
+            }
+        }
 
         // Search filter
         if (!search.isEmpty()) {
-            QString name  = QString::fromStdString(att.getFullName()).toLower();
-            QString email = QString::fromStdString(att.getEmail()).toLower();
+            QString name  = QString::fromStdString(att->getFullName()).toLower();
+            QString email = QString::fromStdString(att->getEmail()).toLower();
             if (!name.contains(search) && !email.contains(search)) continue;
         }
 
@@ -268,11 +323,11 @@ void RegistrationView::rebuildTable() {
         int row = registrationsTable->rowCount();
         registrationsTable->insertRow(row);
 
-        QTableWidgetItem *nameCell = new QTableWidgetItem(QString::fromStdString(att.getFullName()));
-        nameCell->setData(Qt::UserRole, i);  // store array index for action buttons
+        QTableWidgetItem *nameCell = new QTableWidgetItem(QString::fromStdString(att->getFullName()));
+        nameCell->setData(Qt::UserRole, i);
 
         registrationsTable->setItem(row, 0, nameCell);
-        registrationsTable->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(att.getEmail())));
+        registrationsTable->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(att->getEmail())));
         registrationsTable->setItem(row, 2, new QTableWidgetItem(eventName));
         registrationsTable->setItem(row, 3, new QTableWidgetItem(QString::fromStdString(reg.getRegistrationDate())));
         registrationsTable->setItem(row, 4, new QTableWidgetItem(QString::fromStdString(reg.getRegistrationStatusText())));
@@ -281,6 +336,77 @@ void RegistrationView::rebuildTable() {
     }
 
     registrationsTable->setSortingEnabled(true);
+}
+
+void RegistrationView::unregister() {
+    int row = registrationsTable->currentRow();
+    if (row < 0) {
+        QMessageBox::information(this, "Unregister", "Select a registration to unregister from.");
+        return;
+    }
+
+    int idx = registrationsTable->item(row, 0)->data(Qt::UserRole).toInt();
+    Registration &reg = registrations[idx];
+
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this, "Unregister",
+        "Are you sure you want to unregister from this event?",
+        QMessageBox::Yes | QMessageBox::No);
+
+    if (reply == QMessageBox::Yes) {
+        if (database) {
+            database->deleteRegistration(reg.getRegistrationId());
+        }
+
+        for (int i = idx; i < regCount - 1; i++) {
+            registrations[i] = registrations[i + 1];
+            attendees[i] = attendees[i + 1];
+        }
+        regCount--;
+        rebuildTable();
+
+        QMessageBox::information(this, "Unregister", "Successfully unregistered from the event.");
+    }
+}
+
+void RegistrationView::makePayment() {
+    int row = registrationsTable->currentRow();
+    if (row < 0) {
+        QMessageBox::information(this, "Make Payment", "Select a registration to make payment.");
+        return;
+    }
+
+    int idx = registrationsTable->item(row, 0)->data(Qt::UserRole).toInt();
+    Registration &reg = registrations[idx];
+
+    if (reg.isFullyPaid()) {
+        QMessageBox::information(this, "Make Payment", "This registration is already fully paid.");
+        return;
+    }
+
+    if (reg.getRegistrationStatus() == 3) {
+        QMessageBox::warning(this, "Make Payment", "Cannot pay for a cancelled registration.");
+        return;
+    }
+
+    PaymentDialog dialog(reg.getTotalAmount(), reg.getAmountPaid(), this);
+
+    if (dialog.exec() != QDialog::Accepted) return;
+
+    double paymentAmount = dialog.getPaymentAmount();
+
+    try {
+        reg.makePayment(paymentAmount);
+
+        if (database) {
+            database->updateRegistration(reg.getRegistrationId(), reg);
+        }
+
+        rebuildTable();
+        QMessageBox::information(this, "Payment", "Payment successful! Amount paid: $" + QString::number(paymentAmount, 'f', 2));
+    } catch (const invalid_argument &e) {
+        QMessageBox::warning(this, "Payment Error", QString::fromStdString(e.what()));
+    }
 }
 
 RegistrationView::~RegistrationView() {

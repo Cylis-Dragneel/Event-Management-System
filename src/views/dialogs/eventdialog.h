@@ -11,6 +11,7 @@ class QDialogButtonBox;
 class QPlainTextEdit;
 class QSpinBox;
 class QLineEdit;
+class QDoubleSpinBox;
 
 class EventDialog : public QDialog {
 public:
@@ -27,6 +28,7 @@ public:
     int     getCapacity()    const;
     int     getVenueId()     const;
     int     getStatus()      const;
+    double  getCost()        const;
 
 private:
     QLineEdit        *nameEdit;
@@ -37,6 +39,7 @@ private:
     QSpinBox         *capacityEdit;
     QSpinBox         *venueEdit;
     QComboBox        *statusEdit;
+    QDoubleSpinBox   *costEdit;
     QDialogButtonBox *buttonBox;
 };
 

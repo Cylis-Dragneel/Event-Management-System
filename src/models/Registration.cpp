@@ -19,17 +19,27 @@ Registration::Registration() {
     waitlistQueue = new int[waitlistCapacity];
 }
 
-Registration::Registration(int registrationId, int eventId, int attendeeId, int registrationStatus,  int paymentStatus, string registrationDate, double amountPaid, 
+Registration::Registration(int registrationId, int eventId, int attendeeId, int registrationStatus,  int paymentStatus, string registrationDate, double amountPaid,
 double totalAmount, string notes) {
-    
+
     setRegistrationId(registrationId);
     setEventId(eventId);
     setAttendeeId(attendeeId);
     setRegistrationStatus(registrationStatus);
-    setPaymentStatus(paymentStatus);
     setRegistrationDate(registrationDate);
-    setTotalAmount(totalAmount);
-    setAmountPaid(amountPaid);
+    
+    // CRITICAL: Set totalAmount FIRST, then amountPaid to avoid validation error
+    // The setter for amountPaid checks if amount > totalAmount
+    this->totalAmount = (totalAmount >= 0) ? totalAmount : 0.0;
+    this->amountPaid = 0.0;  // Start with 0
+    
+    // Now set amount paid if provided - this will auto-update payment status
+    if (amountPaid > 0 && amountPaid <= this->totalAmount) {
+        setAmountPaid(amountPaid);  // Uses setter which updates payment status
+    } else if (amountPaid == 0) {
+        this->paymentStatus = 1;  // Unpaid
+    }
+    
     setNotes(notes);
     
     waitlistCapacity = 10;

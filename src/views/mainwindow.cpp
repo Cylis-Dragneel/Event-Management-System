@@ -68,9 +68,9 @@ void MainWindow::buildUi() {
     roleStack = new QStackedWidget(central);
 
     auto *organizerTabs = new QTabWidget(roleStack);
-    organizerEventView = new EventView(database, true, organizerTabs);
+    organizerEventView = new EventView(database, true, -1, organizerTabs);
     organizerVenueView = new VenueView(database, true, organizerTabs);
-    organizerRegistrationView = new RegistrationView(database, true, organizerTabs);
+    organizerRegistrationView = new RegistrationView(database, true, -1, organizerTabs);
     organizerBudgetView = new BudgetView(database, true, organizerTabs);
     organizerTabs->addTab(organizerEventView, "Events");
     organizerTabs->addTab(organizerVenueView, "Venues");
@@ -78,8 +78,9 @@ void MainWindow::buildUi() {
     organizerTabs->addTab(organizerBudgetView, "Budgets");
 
     auto *attendeeTabs = new QTabWidget(roleStack);
-    attendeeEventView = new EventView(database, false, attendeeTabs);
-    attendeeRegistrationView = new RegistrationView(database, false, attendeeTabs);
+    int userId = currentUser ? currentUser->getUserId() : -1;
+    attendeeEventView = new EventView(database, false, userId, attendeeTabs);
+    attendeeRegistrationView = new RegistrationView(database, false, userId, attendeeTabs);
     attendeeTabs->addTab(attendeeEventView, "Browse Events");
     attendeeTabs->addTab(attendeeRegistrationView, "My Registrations");
 
@@ -121,6 +122,20 @@ void MainWindow::applyUserRole() {
         authButton->setText("Logout");
     } else {
         titleLabel->setText("Event Discovery");
+
+        roleStack->removeWidget(attendeeEventView);
+        roleStack->removeWidget(attendeeRegistrationView);
+        delete attendeeEventView;
+        delete attendeeRegistrationView;
+
+        auto *attendeeTabs = new QTabWidget(roleStack);
+        int userId = currentUser->getUserId();
+        attendeeEventView = new EventView(database, false, userId, attendeeTabs);
+        attendeeRegistrationView = new RegistrationView(database, false, userId, attendeeTabs);
+        attendeeTabs->addTab(attendeeEventView, "Browse Events");
+        attendeeTabs->addTab(attendeeRegistrationView, "My Registrations");
+
+        roleStack->insertWidget(1, attendeeTabs);
         roleStack->setCurrentIndex(1);
         authButton->setText("Logout");
     }

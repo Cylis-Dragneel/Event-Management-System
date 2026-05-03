@@ -18,9 +18,10 @@
 
 #include "../models/database.h"
 
-EventView::EventView(Database *db, bool organizerMode, QWidget *parent)
+EventView::EventView(Database *db, bool organizerMode, int userId, QWidget *parent)
     : QWidget(parent),
       database(db),
+      currentUserId(userId),
       isOrganizerMode(organizerMode),
       searchEdit(new QLineEdit(this)),
       typeFilter(new QComboBox(this)),
@@ -55,9 +56,9 @@ EventView::EventView(Database *db, bool organizerMode, QWidget *parent)
 
     mainLayout->addLayout(filtersLayout);
 
-    eventsTable->setColumnCount(8);
+    eventsTable->setColumnCount(9);
     eventsTable->setHorizontalHeaderLabels(
-        {"Name", "Date", "Duration", "Type", "Capacity", "Venue", "Status", "Registrations"});
+        {"Name", "Date", "Duration", "Type", "Capacity", "Venue", "Cost", "Status", "Registrations"});
     eventsTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     eventsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     eventsTable->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -70,11 +71,14 @@ EventView::EventView(Database *db, bool organizerMode, QWidget *parent)
     actionsLayout->addWidget(addButton);
     actionsLayout->addWidget(editButton);
     actionsLayout->addWidget(deleteButton);
+    registerButton = new QPushButton("Register", this);
+    actionsLayout->addWidget(registerButton);
     mainLayout->addLayout(actionsLayout);
 
     addButton->setEnabled(isOrganizerMode);
     editButton->setEnabled(isOrganizerMode);
     deleteButton->setEnabled(isOrganizerMode);
+    registerButton->setEnabled(!isOrganizerMode);
 
     loadFromDatabase();
     rebuildTable();
@@ -100,6 +104,7 @@ EventView::EventView(Database *db, bool organizerMode, QWidget *parent)
                            dialog.getType());
             if (dialog.getVenueId() > 0)
                 newEvent.setVenueId(dialog.getVenueId());
+            newEvent.setCost(dialog.getCost());
             appendEvent(newEvent);
             rebuildTable();
         } catch (const std::invalid_argument &e) {
@@ -126,6 +131,7 @@ EventView::EventView(Database *db, bool organizerMode, QWidget *parent)
             e.setDuration(dialog.getDuration());
             e.setCapacity(dialog.getCapacity());
             e.setType(dialog.getType());
+            e.setCost(dialog.getCost());
             if (dialog.getVenueId() > 0)
                 e.setVenueId(dialog.getVenueId());
             e.changeStatus(dialog.getStatus());
@@ -147,6 +153,10 @@ EventView::EventView(Database *db, bool organizerMode, QWidget *parent)
         int idx = eventsTable->item(row, 0)->data(Qt::UserRole).toInt();
         deleteEvent(idx);
         rebuildTable();
+    });
+
+    QObject::connect(registerButton, &QPushButton::clicked, this, [this]() {
+        registerForEvent();
     });
 }
 
@@ -195,13 +205,23 @@ void EventView::loadFromDatabase() {
     if (!database) return;
 
     int count = 0;
-    Event *allEvents = database->getAllEvents(count);
+    Event *allEvents = nullptr;
+    try {
+        allEvents = database->getAllEvents(count);
+    } catch (const std::exception& e) {
+        qDebug() << "Error loading events:" << e.what();
+        return;
+    }
 
     for (int i = 0; i < count; i++) {
-        ensureEventCapacity(eventCount + 1);
-        Event *tail = events + eventCount;
-        *tail = allEvents[i];
-        ++eventCount;
+        try {
+            ensureEventCapacity(eventCount + 1);
+            Event *tail = events + eventCount;
+            *tail = allEvents[i];
+            ++eventCount;
+        } catch (const std::exception& e) {
+            qDebug() << "Skipping invalid event:" << e.what();
+        }
     }
 
     delete[] allEvents;
@@ -231,6 +251,7 @@ void EventView::rebuildTable() {
         const QString durationText = QString::number(current->getDuration()) + " min";
         const QString capacityText = QString::number(current->getCapacity());
         const QString venueText = current->hasVenue() ? QString::number(current->getVenueId()) : QString("Unassigned");
+        const QString costText = QString("$%1").arg(current->getCost(), 0, 'f', 2);
 
         const int arrayIndex = eventCount - remaining;
         QTableWidgetItem *nameCell = new QTableWidgetItem(QString::fromStdString(current->getName()));
@@ -241,11 +262,57 @@ void EventView::rebuildTable() {
         eventsTable->setItem(row, 3, new QTableWidgetItem(QString::fromStdString(current->getTypeText())));
         eventsTable->setItem(row, 4, new QTableWidgetItem(capacityText));
         eventsTable->setItem(row, 5, new QTableWidgetItem(venueText));
-        eventsTable->setItem(row, 6, new QTableWidgetItem(QString::fromStdString(current->getStatusText())));
-        eventsTable->setItem(row, 7, new QTableWidgetItem("0"));
+        eventsTable->setItem(row, 6, new QTableWidgetItem(costText));
+        eventsTable->setItem(row, 7, new QTableWidgetItem(QString::fromStdString(current->getStatusText())));
+        eventsTable->setItem(row, 8, new QTableWidgetItem("0"));
 
         ++current;
         --remaining;
     }
 }
+
+void EventView::registerForEvent() {
+    int row = eventsTable->currentRow();
+    if (row < 0) {
+        QMessageBox::information(this, "Register", "Select an event to register for.");
+        return;
+    }
+
+    int idx = eventsTable->item(row, 0)->data(Qt::UserRole).toInt();
+    Event &event = *(events + idx);
+
+    if (event.getStatus() != 1) {
+        QMessageBox::warning(this, "Register", "Cannot register for this event. It may not be published.");
+        return;
+    }
+
+    QString today = QDate::currentDate().toString("dd-MM-yyyy");
+
+    try {
+        if (database && currentUserId > 0) {
+            // Get event cost for the total amount
+            double eventCost = event.getCost();
+
+            // Create registration with proper total amount (amountPaid = 0, totalAmount = eventCost)
+            Registration newReg(999999, event.getEventId(), currentUserId, 1, 1, 
+                               today.toStdString(), 0.0, eventCost, "");
+
+            if (database->addRegistration(newReg)) {
+                QMessageBox::information(this, "Register", 
+                    "Successfully registered for the event!\n\n" +
+                    QString("Event: %1\n").arg(QString::fromStdString(event.getName())) +
+                    QString("Total Amount: $%1\n").arg(eventCost, 0, 'f', 2) +
+                    QString("Status: Pending\n\n") +
+                    QString("You can make payments from the 'My Registrations' tab."));
+            } else {
+                QMessageBox::warning(this, "Register", "Failed to register. Please try again.");
+            }
+        } else {
+            QMessageBox::warning(this, "Register", "Not logged in properly.");
+        }
+    } catch (const std::invalid_argument &e) {
+        QMessageBox::warning(this, "Register Error", QString::fromStdString(e.what()));
+    }
+}
+
 
