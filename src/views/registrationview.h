@@ -19,6 +19,7 @@ public:
 
 private:
     void loadFromDatabase();
+    void reloadFromDatabase();
     void rebuildTable();
     void unregister();
     void makePayment();

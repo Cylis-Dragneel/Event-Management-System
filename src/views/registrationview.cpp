@@ -96,6 +96,7 @@ RegistrationView::RegistrationView(Database *db, bool organizerMode, int userId,
     rebuildTable();
 
     QObject::connect(refreshButton, &QPushButton::clicked, this, [this]() {
+        reloadFromDatabase();
         rebuildTable();
     });
 
@@ -274,6 +275,19 @@ void RegistrationView::loadFromDatabase() {
     }
 
     delete[] allRegs;
+}
+
+void RegistrationView::reloadFromDatabase() {
+    Registration *freshRegs = new Registration[regCapacity];
+    delete[] registrations;
+    registrations = freshRegs;
+    regCount = 0;
+
+    Attendee *freshAttendees = new Attendee[regCapacity];
+    delete[] attendees;
+    attendees = freshAttendees;
+
+    loadFromDatabase();
 }
 
 void RegistrationView::rebuildTable() {

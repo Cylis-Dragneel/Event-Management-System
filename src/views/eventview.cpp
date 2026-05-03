@@ -84,6 +84,7 @@ EventView::EventView(Database *db, bool organizerMode, int userId, QWidget *pare
     rebuildTable();
 
     QObject::connect(refreshButton, &QPushButton::clicked, this, [this]() {
+        reloadFromDatabase();
         rebuildTable();
     });
 
@@ -225,6 +226,14 @@ void EventView::loadFromDatabase() {
     }
 
     delete[] allEvents;
+}
+
+void EventView::reloadFromDatabase() {
+    delete[] events;
+    events = nullptr;
+    eventCount = 0;
+    eventCapacity = 0;
+    loadFromDatabase();
 }
 
 void EventView::deleteEvent(int index) {

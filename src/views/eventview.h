@@ -21,6 +21,7 @@ private:
     void ensureEventCapacity(int requiredCount);
     void appendEvent(const Event &event);
     void loadFromDatabase();
+    void reloadFromDatabase();
     void rebuildTable();
     void deleteEvent(int index);
     void registerForEvent();
