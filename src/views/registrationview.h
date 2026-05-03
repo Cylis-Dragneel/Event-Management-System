@@ -11,10 +11,11 @@ class QLineEdit;
 class QPushButton;
 class QTableWidget;
 class Database;
+class User;
 
 class RegistrationView : public QWidget {
 public:
-    explicit RegistrationView(Database *database, bool organizerMode, int currentUserId = -1, QWidget *parent = nullptr);
+    explicit RegistrationView(Database *database, bool organizerMode, User *currentUser, QWidget *parent = nullptr);
     ~RegistrationView();
 
 private:
@@ -25,7 +26,7 @@ private:
     void makePayment();
 
     Database *database;
-    int currentUserId;
+    User *currentUser;
     bool isOrganizerMode;
     QLineEdit    *searchEdit;
     QComboBox    *statusFilter;

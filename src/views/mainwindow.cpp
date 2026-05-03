@@ -68,9 +68,9 @@ void MainWindow::buildUi() {
     roleStack = new QStackedWidget(central);
 
     auto *organizerTabs = new QTabWidget(roleStack);
-    organizerEventView = new EventView(database, true, -1, organizerTabs);
+    organizerEventView = new EventView(database, true, nullptr, organizerTabs);
     organizerVenueView = new VenueView(database, true, organizerTabs);
-    organizerRegistrationView = new RegistrationView(database, true, -1, organizerTabs);
+    organizerRegistrationView = new RegistrationView(database, true, nullptr, organizerTabs);
     organizerBudgetView = new BudgetView(database, true, organizerTabs);
     organizerTabs->addTab(organizerEventView, "Events");
     organizerTabs->addTab(organizerVenueView, "Venues");
@@ -78,9 +78,9 @@ void MainWindow::buildUi() {
     organizerTabs->addTab(organizerBudgetView, "Budgets");
 
     auto *attendeeTabs = new QTabWidget(roleStack);
-    int userId = currentUser ? currentUser->getUserId() : -1;
-    attendeeEventView = new EventView(database, false, userId, attendeeTabs);
-    attendeeRegistrationView = new RegistrationView(database, false, userId, attendeeTabs);
+    User *initialUser = currentUser;
+    attendeeEventView = new EventView(database, false, initialUser, attendeeTabs);
+    attendeeRegistrationView = new RegistrationView(database, false, initialUser, attendeeTabs);
     attendeeTabs->addTab(attendeeEventView, "Browse Events");
     attendeeTabs->addTab(attendeeRegistrationView, "My Registrations");
 
@@ -129,9 +129,8 @@ void MainWindow::applyUserRole() {
         delete attendeeRegistrationView;
 
         auto *attendeeTabs = new QTabWidget(roleStack);
-        int userId = currentUser->getUserId();
-        attendeeEventView = new EventView(database, false, userId, attendeeTabs);
-        attendeeRegistrationView = new RegistrationView(database, false, userId, attendeeTabs);
+        attendeeEventView = new EventView(database, false, currentUser, attendeeTabs);
+        attendeeRegistrationView = new RegistrationView(database, false, currentUser, attendeeTabs);
         attendeeTabs->addTab(attendeeEventView, "Browse Events");
         attendeeTabs->addTab(attendeeRegistrationView, "My Registrations");
 

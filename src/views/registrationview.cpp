@@ -23,10 +23,10 @@
 #include <stdexcept>
 #include <cstring>
 
-RegistrationView::RegistrationView(Database *db, bool organizerMode, int userId, QWidget *parent)
+RegistrationView::RegistrationView(Database *db, bool organizerMode, User *user, QWidget *parent)
     : QWidget(parent),
       database(db),
-      currentUserId(userId),
+      currentUser(user),
       isOrganizerMode(organizerMode),
       searchEdit(new QLineEdit(this)),
       statusFilter(new QComboBox(this)),
@@ -175,7 +175,9 @@ RegistrationView::RegistrationView(Database *db, bool organizerMode, int userId,
                                 today.toStdString(),
                                 0.0,
                                 total,
-                                notes.toStdString());
+                                notes.toStdString(),
+                                (firstName + " " + lastName).toStdString(),
+                                email.toStdString());
 
             // Save registration to database
             if (database) {
@@ -243,13 +245,6 @@ void RegistrationView::loadFromDatabase() {
         return;
     }
 
-    int attCountDb = 0;
-    Attendee *allAtts = database->getAllAttendees(attCountDb);
-    for (int i = 0; i < attCountDb && i < regCapacity; i++) {
-        attendees[i] = allAtts[i];
-    }
-    delete[] allAtts;
-
     int regCountDb = 0;
     Registration *allRegs = nullptr;
     try {
@@ -262,8 +257,8 @@ void RegistrationView::loadFromDatabase() {
     for (int i = 0; i < regCountDb && regCount < regCapacity; i++) {
         try {
             Registration reg = allRegs[i];
-            if (!isOrganizerMode && currentUserId != -1) {
-                if (reg.getAttendeeId() != currentUserId) {
+            if (!isOrganizerMode && currentUser) {
+                if (reg.getAttendeeId() != currentUser->getUserId()) {
                     continue;
                 }
             }
@@ -283,10 +278,6 @@ void RegistrationView::reloadFromDatabase() {
     registrations = freshRegs;
     regCount = 0;
 
-    Attendee *freshAttendees = new Attendee[regCapacity];
-    delete[] attendees;
-    attendees = freshAttendees;
-
     loadFromDatabase();
 }
 
@@ -301,20 +292,13 @@ void RegistrationView::rebuildTable() {
     for (int i = 0; i < regCount; i++) {
         const Registration &reg = registrations[i];
 
-        Attendee emptyAtt;
-        const Attendee *att = &emptyAtt;
-        for (int a = 0; a < regCapacity; a++) {
-            if (attendees[a].getAttendeeId() == reg.getAttendeeId()) {
-                att = &attendees[a];
-                break;
-            }
-        }
+        QString displayName = QString::fromStdString(reg.getAttendeeName());
+        QString displayEmail = QString::fromStdString(reg.getAttendeeEmail());
 
-        // Search filter
         if (!search.isEmpty()) {
-            QString name  = QString::fromStdString(att->getFullName()).toLower();
-            QString email = QString::fromStdString(att->getEmail()).toLower();
-            if (!name.contains(search) && !email.contains(search)) continue;
+            QString nameLower = displayName.toLower();
+            QString emailLower = displayEmail.toLower();
+            if (!nameLower.contains(search) && !emailLower.contains(search)) continue;
         }
 
         // Status filter (combo index 1 = Pending = status 1, etc.)
@@ -337,11 +321,11 @@ void RegistrationView::rebuildTable() {
         int row = registrationsTable->rowCount();
         registrationsTable->insertRow(row);
 
-        QTableWidgetItem *nameCell = new QTableWidgetItem(QString::fromStdString(att->getFullName()));
+        QTableWidgetItem *nameCell = new QTableWidgetItem(displayName);
         nameCell->setData(Qt::UserRole, i);
 
         registrationsTable->setItem(row, 0, nameCell);
-        registrationsTable->setItem(row, 1, new QTableWidgetItem(QString::fromStdString(att->getEmail())));
+        registrationsTable->setItem(row, 1, new QTableWidgetItem(displayEmail));
         registrationsTable->setItem(row, 2, new QTableWidgetItem(eventName));
         registrationsTable->setItem(row, 3, new QTableWidgetItem(QString::fromStdString(reg.getRegistrationDate())));
         registrationsTable->setItem(row, 4, new QTableWidgetItem(QString::fromStdString(reg.getRegistrationStatusText())));

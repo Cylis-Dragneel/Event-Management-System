@@ -13,35 +13,36 @@ Registration::Registration() {
     amountPaid = 0;
     totalAmount = 0;
     notes = "";
-    
+    attendeeName = "";
+    attendeeEmail = "";
+
     waitlistCapacity = 10;
     waitlistSize = 0;
     waitlistQueue = new int[waitlistCapacity];
 }
 
 Registration::Registration(int registrationId, int eventId, int attendeeId, int registrationStatus,  int paymentStatus, string registrationDate, double amountPaid,
-double totalAmount, string notes) {
+double totalAmount, string notes, string attendeeName, string attendeeEmail) {
 
     setRegistrationId(registrationId);
     setEventId(eventId);
     setAttendeeId(attendeeId);
     setRegistrationStatus(registrationStatus);
     setRegistrationDate(registrationDate);
-    
-    // CRITICAL: Set totalAmount FIRST, then amountPaid to avoid validation error
-    // The setter for amountPaid checks if amount > totalAmount
+
     this->totalAmount = (totalAmount >= 0) ? totalAmount : 0.0;
-    this->amountPaid = 0.0;  // Start with 0
-    
-    // Now set amount paid if provided - this will auto-update payment status
+    this->amountPaid = 0.0;
+
     if (amountPaid > 0 && amountPaid <= this->totalAmount) {
-        setAmountPaid(amountPaid);  // Uses setter which updates payment status
+        setAmountPaid(amountPaid);
     } else if (amountPaid == 0) {
-        this->paymentStatus = 1;  // Unpaid
+        this->paymentStatus = 1;
     }
-    
+
     setNotes(notes);
-    
+    this->attendeeName = attendeeName;
+    this->attendeeEmail = attendeeEmail;
+
     waitlistCapacity = 10;
     waitlistSize = 0;
     waitlistQueue = new int[waitlistCapacity];
@@ -56,7 +57,9 @@ Registration::Registration(const Registration& other) {
     amountPaid = other.amountPaid;
     totalAmount = other.totalAmount;
     notes = other.notes;
-    
+    attendeeName = other.attendeeName;
+    attendeeEmail = other.attendeeEmail;
+
     waitlistCapacity = other.waitlistCapacity;
     waitlistSize = other.waitlistSize;
     waitlistQueue = new int[waitlistCapacity];
@@ -68,7 +71,7 @@ Registration::Registration(const Registration& other) {
 Registration& Registration::operator=(const Registration& other) {
     if(this != &other) {
         delete[] waitlistQueue;
-        
+
         registrationId = other.registrationId;
         eventId = other.eventId;
         attendeeId = other.attendeeId;
@@ -78,7 +81,9 @@ Registration& Registration::operator=(const Registration& other) {
         amountPaid = other.amountPaid;
         totalAmount = other.totalAmount;
         notes = other.notes;
-        
+        attendeeName = other.attendeeName;
+        attendeeEmail = other.attendeeEmail;
+
         waitlistCapacity = other.waitlistCapacity;
         waitlistSize = other.waitlistSize;
         waitlistQueue = new int[waitlistCapacity];
@@ -221,7 +226,13 @@ double Registration::getTotalAmount() const {
     return totalAmount; 
 }
 string Registration::getNotes() const {
-    return notes; 
+    return notes;
+}
+string Registration::getAttendeeName() const {
+    return attendeeName;
+}
+string Registration::getAttendeeEmail() const {
+    return attendeeEmail;
 }
 
 void Registration::setRegistrationId(int id) {
@@ -330,6 +341,14 @@ void Registration::setTotalAmount(double amount) {
 
 void Registration::setNotes(string notes) {
     this->notes = notes;
+}
+
+void Registration::setAttendeeName(string name) {
+    attendeeName = name;
+}
+
+void Registration::setAttendeeEmail(string email) {
+    attendeeEmail = email;
 }
 
 

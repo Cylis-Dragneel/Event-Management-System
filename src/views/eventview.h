@@ -11,10 +11,11 @@ class QLineEdit;
 class QPushButton;
 class QTableWidget;
 class Database;
+class User;
 
 class EventView : public QWidget {
 public:
-    explicit EventView(Database *database, bool organizerMode, int currentUserId = -1, QWidget *parent = nullptr);
+    explicit EventView(Database *database, bool organizerMode, User *currentUser, QWidget *parent = nullptr);
     ~EventView();
 
 private:
@@ -27,7 +28,7 @@ private:
     void registerForEvent();
 
     Database *database;
-    int currentUserId;
+    User *currentUser;
     bool isOrganizerMode;
     QLineEdit *searchEdit;
     QComboBox *typeFilter;

@@ -17,11 +17,12 @@
 #include <QVBoxLayout>
 
 #include "../models/database.h"
+#include "../models/user.h"
 
-EventView::EventView(Database *db, bool organizerMode, int userId, QWidget *parent)
+EventView::EventView(Database *db, bool organizerMode, User *user, QWidget *parent)
     : QWidget(parent),
       database(db),
-      currentUserId(userId),
+      currentUser(user),
       isOrganizerMode(organizerMode),
       searchEdit(new QLineEdit(this)),
       typeFilter(new QComboBox(this)),
@@ -298,13 +299,12 @@ void EventView::registerForEvent() {
     QString today = QDate::currentDate().toString("dd-MM-yyyy");
 
     try {
-        if (database && currentUserId > 0) {
-            // Get event cost for the total amount
+        if (database && currentUser) {
             double eventCost = event.getCost();
 
-            // Create registration with proper total amount (amountPaid = 0, totalAmount = eventCost)
-            Registration newReg(999999, event.getEventId(), currentUserId, 1, 1, 
-                               today.toStdString(), 0.0, eventCost, "");
+            Registration newReg(999999, event.getEventId(), currentUser->getUserId(), 1, 1,
+                               today.toStdString(), 0.0, eventCost, "",
+                               currentUser->getUsername(), currentUser->getEmail());
 
             if (database->addRegistration(newReg)) {
                 QMessageBox::information(this, "Register", 

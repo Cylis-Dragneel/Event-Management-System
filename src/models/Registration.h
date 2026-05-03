@@ -15,6 +15,8 @@ private:
     double amountPaid;
     double totalAmount;
     string notes;
+    string attendeeName;
+    string attendeeEmail;
     
     // Waitlist data
     int* waitlistQueue;
@@ -24,9 +26,9 @@ private:
 public:
     // Constructors
     Registration();
-    Registration(int registrationId, int eventId, int attendeeId, int registrationStatus, 
-                 int paymentStatus, string registrationDate, double amountPaid, 
-                 double totalAmount, string notes);
+    Registration(int registrationId, int eventId, int attendeeId, int registrationStatus,
+                 int paymentStatus, string registrationDate, double amountPaid,
+                 double totalAmount, string notes, string attendeeName, string attendeeEmail);
     Registration(const Registration& other);
     Registration& operator=(const Registration& other);
     // Destructor
@@ -41,6 +43,8 @@ public:
     double getAmountPaid() const;
     double getTotalAmount() const;
     string getNotes() const;
+    string getAttendeeName() const;
+    string getAttendeeEmail() const;
     
     // Waitlist getters
     int getWaitlistSize() const;
@@ -57,6 +61,8 @@ public:
     void setAmountPaid(double amount);
     void setTotalAmount(double amount);
     void setNotes(string notes);
+    void setAttendeeName(string name);
+    void setAttendeeEmail(string email);
     
     // Business methods
     double getRemainingBalance() const;
