@@ -21,6 +21,7 @@ set(HEADERS
   src/views/dialogs/eventdialog.h
   src/views/dialogs/venuedialog.h
   src/views/dialogs/registrationdialog.h
+  src/views/dialogs/paymentdialog.h
   src/views/dialogs/budgetitemdialog.h
   src/views/dialogs/logindialog.h
   src/views/dialogs/signupdialog.h
@@ -46,6 +47,7 @@ set(SOURCES
   src/views/dialogs/eventdialog.cpp
   src/views/dialogs/venuedialog.cpp
   src/views/dialogs/registrationdialog.cpp
+  src/views/dialogs/paymentdialog.cpp
   src/views/dialogs/budgetitemdialog.cpp
   src/views/dialogs/logindialog.cpp
   src/views/dialogs/signupdialog.cpp

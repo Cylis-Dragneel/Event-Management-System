@@ -2,6 +2,7 @@
 #define VIEWS_BUDGETVIEW_H
 
 #include <QWidget>
+#include <QMap>
 
 #include "../models/BudgetManager.h"
 
@@ -35,11 +36,7 @@ private:
 
     BudgetManager manager;
 
-    // Parallel arrays: one entry per EventBudget tracked here for the event filter combo
-    // We store event names in the combo itself; we need to map combo index -> eventId.
-    // Use a small fixed-size array (max 64 events is plenty for seeded data).
-    int eventIds[64];
-    int eventCount;
+    QMap<int, QString> eventNames;
 };
 
 #endif

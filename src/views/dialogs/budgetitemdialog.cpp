@@ -52,13 +52,15 @@ BudgetItemDialog::BudgetItemDialog(const QString &itemType, QWidget *parent)
     QObject::connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
 
-void BudgetItemDialog::setEvents(const QStringList &eventNames) {
+void BudgetItemDialog::setEvents(const QStringList &eventNames, const QList<int> &eventIds) {
     eventEdit->clear();
-    eventEdit->addItems(eventNames);
+    for (int i = 0; i < eventNames.size(); i++) {
+        eventEdit->addItem(eventNames[i], eventIds[i]);
+    }
 }
 
-int BudgetItemDialog::getEventIndex() const {
-    return eventEdit->currentIndex();
+int BudgetItemDialog::getEventId() const {
+    return eventEdit->currentData().toInt();
 }
 
 QString BudgetItemDialog::getType() const {

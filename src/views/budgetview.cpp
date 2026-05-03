@@ -2,6 +2,7 @@
 
 #include "dialogs/budgetitemdialog.h"
 #include "../models/database.h"
+#include "../models/event.h"
 
 #include <QComboBox>
 #include <QGridLayout>
@@ -28,13 +29,25 @@ BudgetView::BudgetView(Database *db, bool organizerMode, QWidget *parent)
       addIncomeButton(new QPushButton("Add Income", this)),
       addExpenseButton(new QPushButton("Add Expense", this)),
       deleteItemButton(new QPushButton("Delete Item", this)),
-      refreshButton(new QPushButton("Refresh", this)),
-      eventCount(0) {
+      refreshButton(new QPushButton("Refresh", this)) {
+
+    if (database) {
+        int count = 0;
+        Event *events = database->getAllEvents(count);
+        for (int i = 0; i < count; i++) {
+            eventNames.insert(events[i].getEventId(), QString::fromStdString(events[i].getName()));
+        }
+        delete[] events;
+    }
+
     auto *mainLayout = new QVBoxLayout(this);
 
     // --- Filters ---
     auto *filtersLayout = new QHBoxLayout();
-    eventFilter->addItem("All Events");
+    eventFilter->addItem("All Events", -1);
+    for (QMap<int, QString>::const_iterator it = eventNames.begin(); it != eventNames.end(); ++it) {
+        eventFilter->addItem(it.value(), it.key());
+    }
     typeFilter->addItems({"All Types", "income", "expense"});
     filtersLayout->addWidget(new QLabel("Event:", this));
     filtersLayout->addWidget(eventFilter);
@@ -79,15 +92,6 @@ BudgetView::BudgetView(Database *db, bool organizerMode, QWidget *parent)
     rebuildTable();
     updateSummary();
 
-    // Populate event filter combo from manager
-    eventFilter->clear();
-    eventFilter->addItem("All Events");
-    EventBudget allEvents[64];
-    int total = manager.getAllEvents(allEvents, 64);
-    for (int i = 0; i < total; i++) {
-        eventFilter->addItem(QString::fromStdString(allEvents[i].getEventName()));
-    }
-
     QObject::connect(refreshButton, &QPushButton::clicked, this, [this]() {
         rebuildTable();
         updateSummary();
@@ -105,24 +109,17 @@ BudgetView::BudgetView(Database *db, bool organizerMode, QWidget *parent)
 
     QObject::connect(addIncomeButton, &QPushButton::clicked, this, [this]() {
         BudgetItemDialog dialog("income", this);
-
         QStringList names;
-        for (int i = 0; i < eventCount; i++) {
-            EventBudget allEvents[64];
-            int total = manager.getAllEvents(allEvents, 64);
-            for (int j = 0; j < total; j++) {
-                if (allEvents[j].getEventId() == eventIds[i]) {
-                    names << QString::fromStdString(allEvents[j].getEventName());
-                    break;
-                }
-            }
+        QList<int> ids;
+        for (QMap<int, QString>::const_iterator it = eventNames.begin(); it != eventNames.end(); ++it) {
+            names.append(it.value());
+            ids.append(it.key());
         }
-        dialog.setEvents(names);
+        dialog.setEvents(names, ids);
 
         if (dialog.exec() == QDialog::Accepted) {
-            int idx = dialog.getEventIndex();
-            if (idx < 0 || idx >= eventCount) return;
-            int targetEventId = eventIds[idx];
+            int targetEventId = dialog.getEventId();
+            if (targetEventId <= 0) return;
 
             BudgetItem item(targetEventId,
                             dialog.getType().toStdString(),
@@ -131,17 +128,25 @@ BudgetView::BudgetView(Database *db, bool organizerMode, QWidget *parent)
                             dialog.getDate().toStdString(),
                             dialog.getStatus().toStdString());
 
-            EventBudget allEvts[64];
-            int total = manager.getAllEvents(allEvts, 64);
-            for (int i = 0; i < total; i++) {
-                if (allEvts[i].getEventId() == targetEventId) {
-                    EventBudget updated = allEvts[i];
-                    updated.addItem(item);
-                    manager.deleteEvent(targetEventId);
-                    manager.addEvent(updated);
-                    break;
-                }
+            if (database) {
+                database->addBudgetItem(item);
             }
+
+            if (manager.findEventById(targetEventId) != -1) {
+                manager.deleteEvent(targetEventId);
+            }
+            EventBudget existing(targetEventId, eventNames.value(targetEventId).toStdString());
+            if (database) {
+                int count = 0;
+                BudgetItem *items = database->getAllBudgetItems(count);
+                for (int i = 0; i < count; i++) {
+                    if (items[i].getEventId() == targetEventId) {
+                        existing.addItem(items[i]);
+                    }
+                }
+                delete[] items;
+            }
+            manager.addEvent(existing);
             rebuildTable();
             updateSummary();
         }
@@ -149,19 +154,17 @@ BudgetView::BudgetView(Database *db, bool organizerMode, QWidget *parent)
 
     QObject::connect(addExpenseButton, &QPushButton::clicked, this, [this]() {
         BudgetItemDialog dialog("expense", this);
-
         QStringList names;
-        EventBudget allEvts[64];
-        int total = manager.getAllEvents(allEvts, 64);
-        for (int j = 0; j < total; j++) {
-            names << QString::fromStdString(allEvts[j].getEventName());
+        QList<int> ids;
+        for (QMap<int, QString>::const_iterator it = eventNames.begin(); it != eventNames.end(); ++it) {
+            names.append(it.value());
+            ids.append(it.key());
         }
-        dialog.setEvents(names);
+        dialog.setEvents(names, ids);
 
         if (dialog.exec() == QDialog::Accepted) {
-            int idx = dialog.getEventIndex();
-            if (idx < 0 || idx >= eventCount) return;
-            int targetEventId = eventIds[idx];
+            int targetEventId = dialog.getEventId();
+            if (targetEventId <= 0) return;
 
             BudgetItem item(targetEventId,
                             dialog.getType().toStdString(),
@@ -170,17 +173,25 @@ BudgetView::BudgetView(Database *db, bool organizerMode, QWidget *parent)
                             dialog.getDate().toStdString(),
                             dialog.getStatus().toStdString());
 
-            EventBudget allEvtsInner[64];
-            int totalInner = manager.getAllEvents(allEvtsInner, 64);
-            for (int i = 0; i < totalInner; i++) {
-                if (allEvtsInner[i].getEventId() == targetEventId) {
-                    EventBudget updated = allEvtsInner[i];
-                    updated.addItem(item);
-                    manager.deleteEvent(targetEventId);
-                    manager.addEvent(updated);
-                    break;
-                }
+            if (database) {
+                database->addBudgetItem(item);
             }
+
+            if (manager.findEventById(targetEventId) != -1) {
+                manager.deleteEvent(targetEventId);
+            }
+            EventBudget existing(targetEventId, eventNames.value(targetEventId).toStdString());
+            if (database) {
+                int count = 0;
+                BudgetItem *items = database->getAllBudgetItems(count);
+                for (int i = 0; i < count; i++) {
+                    if (items[i].getEventId() == targetEventId) {
+                        existing.addItem(items[i]);
+                    }
+                }
+                delete[] items;
+            }
+            manager.addEvent(existing);
             rebuildTable();
             updateSummary();
         }
@@ -193,23 +204,28 @@ BudgetView::BudgetView(Database *db, bool organizerMode, QWidget *parent)
             return;
         }
 
-        // itemId and eventId are stored as UserRole data on column 0
         QTableWidgetItem *cell = budgetTable->item(row, 0);
         if (!cell) return;
         int itemId  = cell->data(Qt::UserRole).toInt();
         int evtId   = cell->data(Qt::UserRole + 1).toInt();
 
-        EventBudget allEvts[64];
-        int total = manager.getAllEvents(allEvts, 64);
-        for (int i = 0; i < total; i++) {
-            if (allEvts[i].getEventId() == evtId) {
-                EventBudget updated = allEvts[i];
-                updated.deleteItem(itemId);
-                manager.deleteEvent(evtId);
-                manager.addEvent(updated);
-                break;
-            }
+        if (database) {
+            database->deleteBudgetItem(itemId);
         }
+
+        manager.deleteEvent(evtId);
+        EventBudget existing(evtId, eventNames.value(evtId).toStdString());
+        if (database) {
+            int count = 0;
+            BudgetItem *items = database->getAllBudgetItems(count);
+            for (int i = 0; i < count; i++) {
+                if (items[i].getEventId() == evtId) {
+                    existing.addItem(items[i]);
+                }
+            }
+            delete[] items;
+        }
+        manager.addEvent(existing);
         rebuildTable();
         updateSummary();
     });
@@ -220,23 +236,33 @@ void BudgetView::loadFromDatabase() {
         return;
     }
 
+    manager.clearAll();
+
     int count = 0;
     BudgetItem *items = database->getAllBudgetItems(count);
-
-    QMap<int, EventBudget> eventBudgets;
+    if (!items) {
+        return;
+    }
 
     for (int i = 0; i < count; i++) {
         int eventId = items[i].getEventId();
-        if (!eventBudgets.contains(eventId)) {
-            eventBudgets[eventId] = EventBudget(eventId, "Event " + std::to_string(eventId));
+        if (manager.findEventById(eventId) == -1) {
+            QString name = eventNames.contains(eventId) ? eventNames.value(eventId) : "Event " + QString::number(eventId);
+            manager.addEvent(EventBudget(eventId, name.toStdString()));
         }
-        eventBudgets[eventId].addItem(items[i]);
     }
 
-    for (QMap<int, EventBudget>::iterator it = eventBudgets.begin(); it != eventBudgets.end(); ++it) {
-        manager.addEvent(it.value());
-        if (eventCount < 64) {
-            eventIds[eventCount++] = it.key();
+    EventBudget allEvts[64];
+    int total = manager.getAllEvents(allEvts, 64);
+    for (int i = 0; i < count; i++) {
+        for (int e = 0; e < total; e++) {
+            if (allEvts[e].getEventId() == items[i].getEventId()) {
+                EventBudget updated(allEvts[e]);
+                updated.addItem(items[i]);
+                manager.deleteEvent(items[i].getEventId());
+                manager.addEvent(updated);
+                break;
+            }
         }
     }
 
@@ -247,26 +273,23 @@ void BudgetView::rebuildTable() {
     budgetTable->setSortingEnabled(false);
     budgetTable->setRowCount(0);
 
-    int selectedEventIndex = eventFilter->currentIndex(); // 0 = All Events, 1+ = specific
+    int selectedEventId = eventFilter->currentData().toInt();
     QString typeFilterText = typeFilter->currentText();
 
     EventBudget allEvts[64];
     int total = manager.getAllEvents(allEvts, 64);
 
     for (int e = 0; e < total; e++) {
-        // Apply event filter
-        if (selectedEventIndex > 0) {
-            // combo index 1 maps to allEvts[0], etc.
-            if (e != selectedEventIndex - 1) continue;
-        }
+        if (selectedEventId > 0 && allEvts[e].getEventId() != selectedEventId) continue;
 
-        QString eventName = QString::fromStdString(allEvts[e].getEventName());
+        QString eventName = eventNames.contains(allEvts[e].getEventId())
+            ? eventNames.value(allEvts[e].getEventId())
+            : QString::fromStdString(allEvts[e].getEventName());
         int size = allEvts[e].getSize();
 
         for (int i = 0; i < size; i++) {
             BudgetItem item = allEvts[e].getItem(i);
 
-            // Apply type filter
             if (typeFilterText != "All Types") {
                 if (QString::fromStdString(item.getType()) != typeFilterText) continue;
             }
@@ -275,7 +298,6 @@ void BudgetView::rebuildTable() {
             budgetTable->insertRow(row);
 
             QTableWidgetItem *nameCell = new QTableWidgetItem(eventName);
-            // Store itemId and eventId for delete
             nameCell->setData(Qt::UserRole,     item.getID());
             nameCell->setData(Qt::UserRole + 1, allEvts[e].getEventId());
 
@@ -295,13 +317,13 @@ void BudgetView::updateSummary() {
     double totalIncome  = 0.0;
     double totalExpense = 0.0;
 
-    int selectedEventIndex = eventFilter->currentIndex();
+    int selectedEventId = eventFilter->currentData().toInt();
 
     EventBudget allEvts[64];
     int total = manager.getAllEvents(allEvts, 64);
 
     for (int e = 0; e < total; e++) {
-        if (selectedEventIndex > 0 && e != selectedEventIndex - 1) continue;
+        if (selectedEventId > 0 && allEvts[e].getEventId() != selectedEventId) continue;
         totalIncome  += allEvts[e].getTotalIncome();
         totalExpense += allEvts[e].getTotalExpense();
     }

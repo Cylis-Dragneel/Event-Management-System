@@ -13,9 +13,9 @@ class BudgetItemDialog : public QDialog {
 public:
     explicit BudgetItemDialog(const QString &itemType, QWidget *parent = nullptr);
 
-    void setEvents(const QStringList &eventNames);
+    void setEvents(const QStringList &eventNames, const QList<int> &eventIds);
 
-    int     getEventIndex() const;
+    int     getEventId()    const;
     QString getType()       const;
     QString getCategory()   const;
     double  getAmount()     const;
