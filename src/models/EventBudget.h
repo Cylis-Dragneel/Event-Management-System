@@ -3,6 +3,7 @@
 
 #include <string>
 #include "BudgetItem.h"
+using namespace std;
 
 class EventBudget {
 private:

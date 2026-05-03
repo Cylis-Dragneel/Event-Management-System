@@ -1,7 +1,6 @@
 #ifndef BUDGETITEM_H
 #define BUDGETITEM_H
 #include <string>
-
 using namespace std;
 
 class BudgetItem {
@@ -19,14 +18,14 @@ public:
     BudgetItem();
     BudgetItem(int eventId, string t, string c, double a, string d, string status);
 
-    void setType(string t);                 
+    void setType(string t);
     void setCategory(string c);
     void setAmount(double a);
     void setDate(string d);
     void setStatus(string s);
     void setEventId(int id);
 
-    int getID() const;                     
+    int getID() const;
     string getType() const;
     string getCategory() const;
     double getAmount() const;
@@ -36,6 +35,7 @@ public:
 
     void updateAmount(double a);
 
+    static string toLower(string str);
     static bool isValidType(string t);
     static bool isValidCategory(string c);
     static bool isValidStatus(string s);

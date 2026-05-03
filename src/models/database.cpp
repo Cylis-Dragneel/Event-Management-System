@@ -64,7 +64,8 @@ bool Database::createTables() {
         "Capacity INTEGER, "
         "Status INTEGER, "
         "Type INTEGER, "
-        "VenueID INTEGER)";
+        "VenueID INTEGER, "
+        "Cost REAL DEFAULT 0)";
     if (!query.exec(createEvents)) {
         qDebug() << "Failed to create Events table:" << query.lastError().text();
         allSuccess = false;
@@ -79,7 +80,9 @@ bool Database::createTables() {
         "RegistrationDate TEXT, "
         "AmountPaid REAL, "
         "TotalAmount REAL, "
-        "Notes TEXT)";
+        "Notes TEXT, "
+        "AttendeeName TEXT, "
+        "AttendeeEmail TEXT)";
     if (!query.exec(createRegistrations)) {
         qDebug() << "Failed to create Registrations table:" << query.lastError().text();
         allSuccess = false;
@@ -97,8 +100,139 @@ bool Database::createTables() {
         qDebug() << "Failed to create BudgetItems table:" << query.lastError().text();
         allSuccess = false;
     }
+    // 6. Users Table
+    QString createUsers = "CREATE TABLE IF NOT EXISTS Users ("
+        "UserID INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "Username TEXT NOT NULL UNIQUE, "
+        "Password TEXT NOT NULL, "
+        "Email TEXT NOT NULL, "
+        "Role INTEGER NOT NULL)";
+    if (!query.exec(createUsers)) {
+        qDebug() << "Failed to create Users table:" << query.lastError().text();
+        allSuccess = false;
+    }
+
+    query.prepare("ALTER TABLE Registrations ADD COLUMN AttendeeName TEXT");
+    query.exec();
+    query.prepare("ALTER TABLE Registrations ADD COLUMN AttendeeEmail TEXT");
+    query.exec();
+
     return allSuccess;
 }
+
+// ================= USER OPERATIONS =================
+bool Database::addUser(const User& user) {
+    QSqlQuery query;
+    query.prepare("INSERT INTO Users (Username, Password, Email, Role) "
+        "VALUES (:username, :password, :email, :role)");
+    query.bindValue(":username", QString::fromStdString(user.getUsername()));
+    query.bindValue(":password", QString::fromStdString(user.getPassword()));
+    query.bindValue(":email", QString::fromStdString(user.getEmail()));
+    query.bindValue(":role", user.getRole());
+
+    if (!query.exec()) {
+        qDebug() << "Error adding user:" << query.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+User* Database::getUser(const std::string& username) {
+    QSqlQuery query;
+    query.prepare("SELECT * FROM Users WHERE Username = :username");
+    query.bindValue(":username", QString::fromStdString(username));
+
+    if (query.exec() && query.next()) {
+        int userId = query.value("UserID").toInt();
+        std::string user = query.value("Username").toString().toStdString();
+        std::string pass = query.value("Password").toString().toStdString();
+        std::string email = query.value("Email").toString().toStdString();
+        int role = query.value("Role").toInt();
+
+        return new User(userId, user, pass, email, role);
+    }
+    return nullptr;
+}
+
+User* Database::loginUser(const std::string& username, const std::string& password) {
+    QSqlQuery query;
+    query.prepare("SELECT * FROM Users WHERE Username = :username AND Password = :password");
+    query.bindValue(":username", QString::fromStdString(username));
+    query.bindValue(":password", QString::fromStdString(password));
+
+    if (query.exec() && query.next()) {
+        int userId = query.value("UserID").toInt();
+        std::string user = query.value("Username").toString().toStdString();
+        std::string pass = query.value("Password").toString().toStdString();
+        std::string email = query.value("Email").toString().toStdString();
+        int role = query.value("Role").toInt();
+
+        return new User(userId, user, pass, email, role);
+    }
+    return nullptr;
+}
+
+bool Database::userExists(const std::string& username) {
+    QSqlQuery query;
+    query.prepare("SELECT COUNT(*) FROM Users WHERE Username = :username");
+    query.bindValue(":username", QString::fromStdString(username));
+
+    if (query.exec() && query.next()) {
+        return query.value(0).toInt() > 0;
+    }
+    return false;
+}
+
+User* Database::getAllUsers(int& count) {
+    QSqlQuery query;
+    query.prepare("SELECT * FROM Users");
+
+    count = 0;
+    if (!query.exec()) {
+        return nullptr;
+    }
+
+    while (query.next()) {
+        count++;
+    }
+
+    if (count == 0) {
+        return nullptr;
+    }
+
+    User* users = new User[count];
+    query.first();
+    for (int i = 0; i < count; i++) {
+        int userId = query.value("UserID").toInt();
+        std::string user = query.value("Username").toString().toStdString();
+        std::string pass = query.value("Password").toString().toStdString();
+        std::string email = query.value("Email").toString().toStdString();
+        int role = query.value("Role").toInt();
+
+        users[i] = User(userId, user, pass, email, role);
+        query.next();
+    }
+    return users;
+}
+
+bool Database::updateUser(const User& user) {
+    QSqlQuery query;
+    query.prepare("UPDATE Users SET Username=:u, Password=:p, Email=:e, Role=:r WHERE UserID=:id");
+    query.bindValue(":u", QString::fromStdString(user.getUsername()));
+    query.bindValue(":p", QString::fromStdString(user.getPassword()));
+    query.bindValue(":e", QString::fromStdString(user.getEmail()));
+    query.bindValue(":r", user.getRole());
+    query.bindValue(":id", user.getUserId());
+    return query.exec();
+}
+
+bool Database::deleteUser(int id) {
+    QSqlQuery query;
+    query.prepare("DELETE FROM Users WHERE UserID=:id");
+    query.bindValue(":id", id);
+    return query.exec();
+}
+
 // ================= ATTENDEE OPERATIONS =================
 bool Database::addAttendee(const Attendee& attendee) {
     QSqlQuery query;
@@ -180,8 +314,8 @@ Venue Database::getVenue(int id) {
 // ================= EVENT OPERATIONS =================
 bool Database::addEvent(const Event& event) {
     QSqlQuery query;
-    query.prepare("INSERT INTO Events (Name, Description, Date, Time, Duration, Capacity, Status, Type, VenueID) "
-        "VALUES (:name, :description, :date, :time, :duration, :capacity, :status, :type, :venueId)");
+    query.prepare("INSERT INTO Events (Name, Description, Date, Time, Duration, Capacity, Status, Type, VenueID, Cost) "
+        "VALUES (:name, :description, :date, :time, :duration, :capacity, :status, :type, :venueId, :cost)");
     query.bindValue(":name", QString::fromStdString(event.getName()));
     query.bindValue(":description", QString::fromStdString(event.getDescription()));
     query.bindValue(":date", QString::fromStdString(event.getDate()));
@@ -191,6 +325,7 @@ bool Database::addEvent(const Event& event) {
     query.bindValue(":status", event.getStatus());
     query.bindValue(":type", event.getType());
     query.bindValue(":venueId", event.getVenueId());
+    query.bindValue(":cost", event.getCost());
 
     if (!query.exec()) {
         qDebug() << "Error adding event:" << query.lastError().text();
@@ -202,13 +337,7 @@ Event Database::getEvent(int id) {
     QSqlQuery query;
     query.prepare("SELECT * FROM Events WHERE EventID = :id");
     query.bindValue(":id", id);
-    
-    if (!query.exec()) {
-        qDebug() << "Error getting event:" << query.lastError().text();
-        return Event();
-    }
-    
-    if (query.next()) {
+    if (query.exec() && query.next()) {
         string name = query.value("Name").toString().toStdString();
         string description = query.value("Description").toString().toStdString();
         string date = query.value("Date").toString().toStdString();
@@ -220,6 +349,7 @@ Event Database::getEvent(int id) {
 
         Event e(name, description, date, time, duration, capacity, type);
         e.setVenueId(query.value("VenueID").toInt());
+        e.setCost(query.value("Cost").toDouble());
         e.changeStatus(status);
         return e;
     }
@@ -229,8 +359,8 @@ Event Database::getEvent(int id) {
 bool Database::addRegistration(const Registration& reg) {
     QSqlQuery query;
     query.prepare("INSERT INTO Registrations (EventID, AttendeeID, RegistrationStatus, PaymentStatus, "
-        "RegistrationDate, AmountPaid, TotalAmount, Notes) "
-        "VALUES (:eventId, :attendeeId, :regStatus, :payStatus, :date, :amountPaid, :totalAmount, :notes)");
+        "RegistrationDate, AmountPaid, TotalAmount, Notes, AttendeeName, AttendeeEmail) "
+        "VALUES (:eventId, :attendeeId, :regStatus, :payStatus, :date, :amountPaid, :totalAmount, :notes, :name, :email)");
     query.bindValue(":eventId", reg.getEventId());
     query.bindValue(":attendeeId", reg.getAttendeeId());
     query.bindValue(":regStatus", reg.getRegistrationStatus());
@@ -239,6 +369,8 @@ bool Database::addRegistration(const Registration& reg) {
     query.bindValue(":amountPaid", reg.getAmountPaid());
     query.bindValue(":totalAmount", reg.getTotalAmount());
     query.bindValue(":notes", QString::fromStdString(reg.getNotes()));
+    query.bindValue(":name", QString::fromStdString(reg.getAttendeeName()));
+    query.bindValue(":email", QString::fromStdString(reg.getAttendeeEmail()));
     if (!query.exec()) {
         qDebug() << "Error adding registration:" << query.lastError().text();
         return false;
@@ -258,7 +390,9 @@ Registration Database::getRegistration(int id) {
         double amountPaid = query.value("AmountPaid").toDouble();
         double totalAmount = query.value("TotalAmount").toDouble();
         string notes = query.value("Notes").toString().toStdString();
-        return Registration(id, eventId, attendeeId, regStatus, payStatus, date, amountPaid, totalAmount, notes);
+        string name = query.value("AttendeeName").toString().toStdString();
+        string email = query.value("AttendeeEmail").toString().toStdString();
+        return Registration(id, eventId, attendeeId, regStatus, payStatus, date, amountPaid, totalAmount, notes, name, email);
     }
     return Registration();
 }
@@ -341,7 +475,7 @@ bool Database::deleteVenue(int id) {
 bool Database::updateEvent(int id, const Event& event) {
     QSqlQuery query;
     query.prepare("UPDATE Events SET Name=:n, Description=:d, Date=:date, Time=:t, Duration=:dur, "
-                  "Capacity=:c, Status=:s, Type=:ty, VenueID=:vid WHERE EventID=:id");
+                  "Capacity=:c, Status=:s, Type=:ty, VenueID=:vid, Cost=:cost WHERE EventID=:id");
     query.bindValue(":n", QString::fromStdString(event.getName()));
     query.bindValue(":d", QString::fromStdString(event.getDescription()));
     query.bindValue(":date", QString::fromStdString(event.getDate()));
@@ -351,6 +485,7 @@ bool Database::updateEvent(int id, const Event& event) {
     query.bindValue(":s", event.getStatus());
     query.bindValue(":ty", event.getType());
     query.bindValue(":vid", event.getVenueId());
+    query.bindValue(":cost", event.getCost());
     query.bindValue(":id", id);
     return query.exec();
 }
@@ -364,8 +499,8 @@ bool Database::deleteEvent(int id) {
 bool Database::updateRegistration(int id, const Registration& reg) {
     QSqlQuery query;
     query.prepare("UPDATE Registrations SET EventID=:eid, AttendeeID=:aid, RegistrationStatus=:rs, "
-                  "PaymentStatus=:ps, RegistrationDate=:date, AmountPaid=:ap, TotalAmount=:ta, Notes=:n "
-                  "WHERE RegistrationID=:id");
+                  "PaymentStatus=:ps, RegistrationDate=:date, AmountPaid=:ap, TotalAmount=:ta, Notes=:n, "
+                  "AttendeeName=:aname, AttendeeEmail=:aemail WHERE RegistrationID=:id");
     query.bindValue(":eid", reg.getEventId());
     query.bindValue(":aid", reg.getAttendeeId());
     query.bindValue(":rs", reg.getRegistrationStatus());
@@ -374,6 +509,8 @@ bool Database::updateRegistration(int id, const Registration& reg) {
     query.bindValue(":ap", reg.getAmountPaid());
     query.bindValue(":ta", reg.getTotalAmount());
     query.bindValue(":n", QString::fromStdString(reg.getNotes()));
+    query.bindValue(":aname", QString::fromStdString(reg.getAttendeeName()));
+    query.bindValue(":aemail", QString::fromStdString(reg.getAttendeeEmail()));
     query.bindValue(":id", id);
     return query.exec();
 }
@@ -397,7 +534,7 @@ bool Database::updateBudgetItem(int id, const BudgetItem& item) {
     query.bindValue(":id", id);
     return query.exec();
 }
-}
+
 bool Database::deleteBudgetItem(int id) {
     QSqlQuery query;
     query.prepare("DELETE FROM BudgetItems WHERE ItemID=:id");
@@ -458,6 +595,7 @@ Event* Database::getAllEvents(int& count) {
     QSqlQuery query("SELECT * FROM Events");
     int i = 0;
     while (query.next() && i < count) {
+        int eventId = query.value("EventID").toInt();
         string name = query.value("Name").toString().toStdString();
         string description = query.value("Description").toString().toStdString();
         string date = query.value("Date").toString().toStdString();
@@ -467,7 +605,9 @@ Event* Database::getAllEvents(int& count) {
         int type = query.value("Type").toInt();
         int status = query.value("Status").toInt();
         Event e(name, description, date, time, duration, capacity, type);
+        e.setEventId(eventId);
         e.setVenueId(query.value("VenueID").toInt());
+        e.setCost(query.value("Cost").toDouble());
         e.changeStatus(status);
         list[i++] = e;
     }
@@ -492,7 +632,9 @@ Registration* Database::getAllRegistrations(int& count) {
         double amountPaid = query.value("AmountPaid").toDouble();
         double totalAmount = query.value("TotalAmount").toDouble();
         string notes = query.value("Notes").toString().toStdString();
-        list[i++] = Registration(id, eventId, attendeeId, regStatus, payStatus, date, amountPaid, totalAmount, notes);
+        string name = query.value("AttendeeName").toString().toStdString();
+        string email = query.value("AttendeeEmail").toString().toStdString();
+        list[i++] = Registration(id, eventId, attendeeId, regStatus, payStatus, date, amountPaid, totalAmount, notes, name, email);
     }
     return list;
 }

@@ -18,6 +18,7 @@ private:
     int status;   // 0=Draft, 1=Published, 2=Completed, 3=Cancelled
     int type;     // 0=Conference, 1=Workshop, 2=Concert, 3=Wedding, 4=Corporate, 5=Social
     int venueId;
+    double cost;  // Event registration cost
 
 public:
     // Constructors
@@ -34,6 +35,7 @@ public:
     void setCapacity(int cap);
     void setType(int t);
     void setVenueId(int venueId);
+    void setEventId(int id);
 
     // Getters
     int getEventId() const;
@@ -48,6 +50,8 @@ public:
     string getTypeText() const;
     string getStatusText() const;
     int getVenueId() const;
+    double getCost() const;
+    void setCost(double c);
 
     bool changeStatus(int newStatus);
 

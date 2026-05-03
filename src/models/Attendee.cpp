@@ -1,9 +1,10 @@
-#include"attendee.h"
+#include "Attendee.h"
 #include "validation.h"
-#include <iostream>
 #include <stdexcept>
 using namespace std;
+
 int Attendee::nextId = 1;
+
 Attendee::Attendee() {
     attendeeId = -1;
     firstName = "";
@@ -22,7 +23,7 @@ Attendee::Attendee(string firstName, string lastName, string email, string phone
 }
 
 Attendee::Attendee(int attendeeId, string firstName, string lastName, string email, string phone, string address) {
-    
+
     setAttendeeId(attendeeId);
     setFirstName(firstName);
     setLastName(lastName);
